@@ -13,7 +13,7 @@ export async function POST() {
   }
 
   const backendRes = await fetch(
-    `${process.env.NEXT_PUBLIC_AUTH_API_URL}/api/v1/auth/refresh`,
+    `${process.env.AUTH_API_URL}/api/v1/auth/refresh`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },

@@ -8,7 +8,6 @@ import { useAuthStore } from "@/store/auth";
  * All requests include the access token if available, but it does not handle 401 retries since it's only used for auth operations.
  * */
 export const authApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_AUTH_API_URL,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -20,7 +19,6 @@ authApi.interceptors.request.use((config) => {
   return config;
 });
 
-
 /**
  * Incidents Service (port 8087)
  *
@@ -29,7 +27,6 @@ authApi.interceptors.request.use((config) => {
  * If refresh fails, it clears auth state and redirects to login.
  */
 export const incidentsApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_INCIDENTS_API_URL,
   headers: { "Content-Type": "application/json" },
 });
 
