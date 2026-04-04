@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useAuthStore } from "@/store/auth";
+import { decodeJwt } from "@/lib/jwt";
 
 /**
  * Auth Service (port 8086)
@@ -81,7 +82,8 @@ incidentsApi.interceptors.response.use(
       if (!res.ok) throw new Error("Refresh failed");
 
       const { accessToken } = await res.json();
-      useAuthStore.getState().setAccessToken(accessToken);
+      const { userId, tenantId, role } = decodeJwt(accessToken);
+      useAuthStore.getState().setAuth({ accessToken, userId, tenantId, role });
       incidentsApi.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
       original.headers.Authorization = `Bearer ${accessToken}`;
       processQueue(null, accessToken);
