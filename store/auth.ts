@@ -1,0 +1,34 @@
+import { create } from "zustand";
+
+export type Role = "ADMIN" | "ENGINEER" | "VIEWER";
+
+interface AuthState {
+  accessToken: string | null;
+  userId: string | null;
+  tenantId: string | null;
+  role: Role | null;
+
+  setAuth: (payload: {
+    accessToken: string;
+    userId: string;
+    tenantId: string;
+    role: Role;
+  }) => void;
+  setAccessToken: (token: string) => void;
+  clearAuth: () => void;
+}
+
+export const useAuthStore = create<AuthState>((set) => ({
+  accessToken: null,
+  userId: null,
+  tenantId: null,
+  role: null,
+
+  setAuth: ({ accessToken, userId, tenantId, role }) =>
+    set({ accessToken, userId, tenantId, role }),
+
+  setAccessToken: (accessToken) => set({ accessToken }),
+
+  clearAuth: () =>
+    set({ accessToken: null, userId: null, tenantId: null, role: null }),
+}));
