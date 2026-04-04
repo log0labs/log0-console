@@ -9,8 +9,8 @@ import { z } from "zod";
 import { toast } from "sonner";
 
 import { authApi } from "@/lib/api";
+import { decodeJwt } from "@/lib/jwt";
 import { useAuthStore } from "@/store/auth";
-import type { Role } from "@/store/auth";
 import {
   Card,
   CardContent,
@@ -58,13 +58,10 @@ export default function LoginPage() {
         body: JSON.stringify({ refreshToken: data.refreshToken }),
       });
 
-      // Store access token + user context in memory
-      setAuth({
-        accessToken: data.accessToken,
-        userId: data.userId,
-        tenantId: data.tenantId,
-        role: data.role as Role,
-      });
+      // Decode JWT to get userId, tenantId, role — more reliable than
+      // depending on the login response body field names.
+      const { userId, tenantId, role } = decodeJwt(data.accessToken);
+      setAuth({ accessToken: data.accessToken, userId, tenantId, role });
 
       router.push("/dashboard");
     } catch (err: unknown) {
