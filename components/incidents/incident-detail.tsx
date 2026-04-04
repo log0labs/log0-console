@@ -1,19 +1,29 @@
 "use client";
 
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
 import { useIncident } from "@/hooks/use-incident";
 import { useIncidentLogs } from "@/hooks/use-incident-logs";
+import { useUsers } from "@/hooks/use-users";
 import { incidentsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { IncidentStatus, Severity } from "@/types/incident";
 
-// Badge configs (same as list page)
+// ── Badge configs ─────────────────────────────────────────────────────────────
 
 const SEVERITY_CLASS: Record<Severity, string> = {
   CRITICAL: "bg-red-500/15 text-red-600 border-red-500/30 dark:text-red-400",
@@ -40,7 +50,7 @@ const STATUS_LABEL: Record<IncidentStatus, string> = {
   RESOLVED: "Resolved",
 };
 
-// Helpers───────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function timeAgo(iso: string) {
   return formatDistanceToNow(new Date(iso), { addSuffix: true });
@@ -50,45 +60,162 @@ function fmtDate(iso: string) {
   return format(new Date(iso), "MMM d, yyyy HH:mm");
 }
 
-// Main component────────────────────
+// ── Assign panel (inline, ADMIN only) ─────────────────────────────────────────
+
+function AssignPanel({
+  incidentId,
+  tenantId,
+  onDone,
+}: {
+  incidentId: string;
+  tenantId: string;
+  onDone: () => void;
+}) {
+  const userId = useAuthStore((s) => s.userId);
+  const queryClient = useQueryClient();
+  const { data: users } = useUsers();
+  const [assigneeId, setAssigneeId] = useState("");
+
+  // Engineers and admins can be assigned
+  const assignable = (users ?? []).filter(
+    (u) => u.role === "ENGINEER" || u.role === "ADMIN"
+  );
+
+  const assign = useMutation({
+    mutationFn: () =>
+      incidentsApi.patch(
+        `/api/v1/incidents/${incidentId}/assign`,
+        {
+          assignedToUserId: assigneeId,
+          assignedByUserId: userId,
+          notes: null,
+        },
+        { params: { tenantId } }
+      ),
+    onSuccess: () => {
+      toast.success("Incident assigned");
+      queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
+      queryClient.invalidateQueries({ queryKey: ["incidents"] });
+      onDone();
+    },
+    onError: (err: unknown) => {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error ?? "Failed to assign incident";
+      toast.error(msg);
+    },
+  });
+
+  return (
+    <div className="flex items-end gap-2">
+      <div className="flex flex-col gap-1.5">
+        <Label className="text-xs">Assign to</Label>
+        <Select value={assigneeId} onValueChange={setAssigneeId}>
+          <SelectTrigger className="h-8 w-52 text-xs">
+            <SelectValue placeholder="Select engineer…" />
+          </SelectTrigger>
+          <SelectContent>
+            {assignable.map((u) => (
+              <SelectItem key={u.userId} value={u.userId} className="text-xs">
+                {u.email}{" "}
+                <span className="text-muted-foreground">· {u.role}</span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <Button
+        size="sm"
+        className="h-8"
+        disabled={!assigneeId || assign.isPending}
+        onClick={() => assign.mutate()}
+      >
+        {assign.isPending ? "Assigning…" : "Assign"}
+      </Button>
+      <Button size="sm" variant="ghost" className="h-8" onClick={onDone}>
+        Cancel
+      </Button>
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export function IncidentDetail({ incidentId }: { incidentId: string }) {
   const role = useAuthStore((s) => s.role);
+  const userId = useAuthStore((s) => s.userId);
   const tenantId = useAuthStore((s) => s.tenantId);
   const queryClient = useQueryClient();
+  const [showAssign, setShowAssign] = useState(false);
 
   const { data: incident, isLoading, isError } = useIncident(incidentId);
   const { data: logsPage } = useIncidentLogs(incidentId);
 
-  const canAct = role === "ADMIN" || role === "ENGINEER";
+  // ── State machine rules ──────────────────────────────────────────────────
+
+  const isAdmin = role === "ADMIN";
+  const isEngineer = role === "ENGINEER";
+
+  // Assign: NEW status, ADMIN only
+  const showAssignBtn = incident?.status === "NEW" && isAdmin;
+
+  // Acknowledge: ASSIGNED status, ADMIN or the assigned engineer
+  const assignedTo = incident?.assignment?.assignedToUserId;
+  const showAcknowledge =
+    incident?.status === "ASSIGNED" &&
+    (isAdmin || (isEngineer && assignedTo === userId));
+
+  // Resolve: ACKNOWLEDGED status, ADMIN or the assigned engineer
+  const showResolve =
+    incident?.status === "ACKNOWLEDGED" &&
+    (isAdmin || (isEngineer && assignedTo === userId));
+
+  // ── Mutations ────────────────────────────────────────────────────────────
+
+  function invalidate() {
+    queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
+    queryClient.invalidateQueries({ queryKey: ["incidents"] });
+  }
 
   const acknowledge = useMutation({
     mutationFn: () =>
-      incidentsApi.patch(`/api/v1/incidents/${incidentId}/acknowledge`, null, {
-        params: { tenantId },
-      }),
+      incidentsApi.patch(
+        `/api/v1/incidents/${incidentId}/acknowledge`,
+        { userId },
+        { params: { tenantId } }
+      ),
     onSuccess: () => {
       toast.success("Incident acknowledged");
-      queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
-      queryClient.invalidateQueries({ queryKey: ["incidents"] });
+      invalidate();
     },
-    onError: () => toast.error("Failed to acknowledge incident"),
+    onError: (err: unknown) => {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error ?? "Failed to acknowledge";
+      toast.error(msg);
+    },
   });
 
   const resolve = useMutation({
     mutationFn: () =>
-      incidentsApi.patch(`/api/v1/incidents/${incidentId}/resolve`, null, {
-        params: { tenantId },
-      }),
+      incidentsApi.patch(
+        `/api/v1/incidents/${incidentId}/resolve`,
+        { userId },
+        { params: { tenantId } }
+      ),
     onSuccess: () => {
       toast.success("Incident resolved");
-      queryClient.invalidateQueries({ queryKey: ["incident", incidentId] });
-      queryClient.invalidateQueries({ queryKey: ["incidents"] });
+      invalidate();
     },
-    onError: () => toast.error("Failed to resolve incident"),
+    onError: (err: unknown) => {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error ?? "Failed to resolve";
+      toast.error(msg);
+    },
   });
 
-  // Loading / error states────────
+  // ── Loading / error states ────────────────────────────────────────────────
 
   if (isLoading) {
     return (
@@ -110,13 +237,7 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
     );
   }
 
-  // Action buttons────────────────
-
-  const showAcknowledge =
-    canAct && (incident.status === "NEW" || incident.status === "ASSIGNED");
-  const showResolve = canAct && incident.status === "ACKNOWLEDGED";
-
-  // Render────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -142,8 +263,17 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
       </div>
 
       {/* Action buttons */}
-      {(showAcknowledge || showResolve) && (
-        <div className="flex gap-2">
+      {(showAssignBtn || showAcknowledge || showResolve) && !showAssign && (
+        <div className="flex flex-wrap gap-2">
+          {showAssignBtn && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowAssign(true)}
+            >
+              Assign
+            </Button>
+          )}
           {showAcknowledge && (
             <Button
               size="sm"
@@ -158,7 +288,7 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
             <Button
               size="sm"
               variant="outline"
-              className="border-green-500/40 text-green-600 hover:bg-green-500/10 dark:text-green-400"
+              className="border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10"
               disabled={resolve.isPending}
               onClick={() => resolve.mutate()}
             >
@@ -168,8 +298,17 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
         </div>
       )}
 
+      {/* Assign panel (inline) */}
+      {showAssign && (
+        <AssignPanel
+          incidentId={incidentId}
+          tenantId={tenantId!}
+          onDone={() => setShowAssign(false)}
+        />
+      )}
+
       {/* Quick stats */}
-      <div className="grid grid-cols-2 gap-x-6 gap-y-2 rounded-lg border bg-muted/30 p-4 text-sm">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-3 rounded-lg border bg-muted/30 p-4 text-sm">
         <div>
           <p className="text-xs text-muted-foreground">Occurrences</p>
           <p className="font-mono font-medium">
@@ -190,6 +329,14 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
           <p className="text-xs text-muted-foreground">First seen</p>
           <p>{fmtDate(incident.firstSeenAt)}</p>
         </div>
+        {incident.assignment && (
+          <div className="col-span-2">
+            <p className="text-xs text-muted-foreground">Assigned to</p>
+            <p className="font-mono text-xs">
+              {incident.assignment.assignedToUserId}
+            </p>
+          </div>
+        )}
         {incident.resolvedAt && (
           <div className="col-span-2">
             <p className="text-xs text-muted-foreground">Resolved</p>
@@ -225,13 +372,13 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
           <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
             Status History
           </p>
-          <div className="flex flex-col gap-0">
+          <div className="flex flex-col">
             {incident.statusHistory.map((entry, i) => (
               <div key={i} className="flex items-start gap-3 py-2">
                 <div className="mt-1.5 flex flex-col items-center">
                   <div className="h-2 w-2 rounded-full bg-border ring-2 ring-background" />
                   {i < incident.statusHistory!.length - 1 && (
-                    <div className="mt-1 h-full w-px bg-border" />
+                    <div className="mt-1 h-4 w-px bg-border" />
                   )}
                 </div>
                 <div className="flex flex-1 items-center justify-between gap-2">

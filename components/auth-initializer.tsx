@@ -12,11 +12,17 @@ import { decodeJwt } from "@/lib/jwt";
  */
 export function AuthInitializer() {
   const setAuth = useAuthStore((s) => s.setAuth);
+  const markReady = useAuthStore((s) => s.markReady);
   const accessToken = useAuthStore((s) => s.accessToken);
   const initialized = useRef(false);
 
   useEffect(() => {
-    if (initialized.current || accessToken) return;
+    if (initialized.current) return;
+    // If already hydrated from a previous client-side login, just mark ready
+    if (accessToken) {
+      markReady();
+      return;
+    }
     initialized.current = true;
 
     fetch("/api/auth/refresh", { method: "POST" })
@@ -26,9 +32,11 @@ export function AuthInitializer() {
         setAuth({ accessToken: token, userId, tenantId, role });
       })
       .catch(() => {
-        // Refresh failed - middleware will redirect to /login on next navigation
+        // Refresh failed - mark ready anyway so the UI unblocks;
+        // middleware will redirect to /login on next navigation
+        markReady();
       });
-  }, [accessToken, setAuth]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
 }

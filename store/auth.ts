@@ -7,6 +7,7 @@ interface AuthState {
   userId: string | null;
   tenantId: string | null;
   role: Role | null;
+  authReady: boolean;
 
   setAuth: (payload: {
     accessToken: string;
@@ -16,6 +17,7 @@ interface AuthState {
   }) => void;
   setAccessToken: (token: string) => void;
   clearAuth: () => void;
+  markReady: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -23,12 +25,21 @@ export const useAuthStore = create<AuthState>((set) => ({
   userId: null,
   tenantId: null,
   role: null,
+  authReady: false,
 
   setAuth: ({ accessToken, userId, tenantId, role }) =>
-    set({ accessToken, userId, tenantId, role }),
+    set({ accessToken, userId, tenantId, role, authReady: true }),
 
   setAccessToken: (accessToken) => set({ accessToken }),
 
   clearAuth: () =>
-    set({ accessToken: null, userId: null, tenantId: null, role: null }),
+    set({
+      accessToken: null,
+      userId: null,
+      tenantId: null,
+      role: null,
+      authReady: false,
+    }),
+
+  markReady: () => set({ authReady: true }),
 }));

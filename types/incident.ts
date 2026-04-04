@@ -35,8 +35,17 @@ export interface StatusHistoryEntry {
   changedBy?: string;
 }
 
+export interface IncidentAssignment {
+  assignmentId?: string;
+  assignedToUserId: string;
+  assignedByUserId: string;
+  assignedAt: string;
+  notes?: string | null;
+}
+
 export interface IncidentDetail extends Incident {
   statusHistory?: StatusHistoryEntry[];
+  assignment?: IncidentAssignment | null;
 }
 
 export interface IncidentLog {
