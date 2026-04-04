@@ -24,6 +24,10 @@ const nextConfig = {
         source: "/api/v1/incidents/:path*",
         destination: `${process.env.INCIDENTS_API_URL}/api/v1/incidents/:path*`,
       },
+      {
+        source: "/api/v1/logs",
+        destination: `${process.env.INCIDENTS_API_URL}/api/v1/logs`,
+      },
     ];
   },
 };

@@ -7,6 +7,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Home01Icon,
   Alert01Icon,
+  FileTerminalIcon,
   Settings01Icon,
   Logout01Icon,
   ArrowLeft01Icon,
@@ -19,6 +20,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { href: "/dashboard", icon: Home01Icon, label: "Dashboard" },
   { href: "/incidents", icon: Alert01Icon, label: "Incidents" },
+  { href: "/logs", icon: FileTerminalIcon, label: "Logs" },
 ];
 
 function NavLink({
