@@ -28,3 +28,28 @@ export interface PageResponse<T> {
   first: boolean;
   last: boolean;
 }
+
+export interface StatusHistoryEntry {
+  status: IncidentStatus;
+  changedAt: string;
+  changedBy?: string;
+}
+
+export interface IncidentDetail extends Incident {
+  statusHistory?: StatusHistoryEntry[];
+}
+
+export interface IncidentLog {
+  logId: string;
+  timestamp: string;
+  level: string;
+  message: string;
+  trace?: string;
+}
+
+export interface IncidentLogsPage {
+  content: IncidentLog[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+}

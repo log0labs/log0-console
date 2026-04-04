@@ -58,7 +58,7 @@ export default function LoginPage() {
         body: JSON.stringify({ refreshToken: data.refreshToken }),
       });
 
-      // Decode JWT to get userId, tenantId, role — more reliable than
+      // Decode JWT to get userId, tenantId, role - more reliable than
       // depending on the login response body field names.
       const { userId, tenantId, role } = decodeJwt(data.accessToken);
       setAuth({ accessToken: data.accessToken, userId, tenantId, role });
