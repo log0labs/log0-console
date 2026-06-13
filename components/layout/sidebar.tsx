@@ -16,6 +16,32 @@ import {
 
 import { useAuthStore } from "@/store/auth";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+/** Wrap a sidebar control in a styled tooltip only while the rail is collapsed. */
+function CollapsedTip({
+  show,
+  label,
+  children,
+}: {
+  show: boolean;
+  label: string;
+  children: React.ReactElement;
+}) {
+  if (!show) return children;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side="right" sideOffset={14}>
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 const NAV_ITEMS = [
   { href: "/dashboard", icon: Home01Icon, label: "Dashboard" },
@@ -37,20 +63,21 @@ function NavLink({
   active: boolean;
 }) {
   return (
-    <Link
-      href={href}
-      title={collapsed ? label : undefined}
-      className={cn(
-        "flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors",
-        collapsed && "justify-center",
-        active
-          ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
-          : "text-sidebar-foreground hover:bg-sidebar-accent/60"
-      )}
-    >
-      <HugeiconsIcon icon={icon} size={18} className="shrink-0" />
-      {!collapsed && label}
-    </Link>
+    <CollapsedTip show={collapsed} label={label}>
+      <Link
+        href={href}
+        className={cn(
+          "flex items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors",
+          collapsed && "justify-center",
+          active
+            ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+            : "text-sidebar-foreground hover:bg-sidebar-accent/60"
+        )}
+      >
+        <HugeiconsIcon icon={icon} size={18} className="shrink-0" />
+        {!collapsed && label}
+      </Link>
+    </CollapsedTip>
   );
 }
 
@@ -111,53 +138,56 @@ export function Sidebar() {
       {/* Bottom: settings (admin) + logout + collapse */}
       <div className="flex shrink-0 flex-col gap-1 border-t p-2">
         {role === "ADMIN" && (
-          <Link
-            href="/settings/workspace"
-            title={collapsed ? "Settings" : undefined}
+          <CollapsedTip show={collapsed} label="Settings">
+            <Link
+              href="/settings/workspace"
+              className={cn(
+                "flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors",
+                collapsed && "justify-center",
+                isSettingsActive
+                  ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/60"
+              )}
+            >
+              <HugeiconsIcon
+                icon={Settings01Icon}
+                size={18}
+                className="shrink-0"
+              />
+              {!collapsed && "Settings"}
+            </Link>
+          </CollapsedTip>
+        )}
+
+        <CollapsedTip show={collapsed} label="Log out">
+          <button
+            onClick={handleLogout}
             className={cn(
-              "flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm transition-colors",
-              collapsed && "justify-center",
-              isSettingsActive
-                ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
-                : "text-sidebar-foreground hover:bg-sidebar-accent/60"
+              "flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent/60",
+              collapsed && "justify-center"
+            )}
+          >
+            <HugeiconsIcon icon={Logout01Icon} size={18} className="shrink-0" />
+            {!collapsed && "Log out"}
+          </button>
+        </CollapsedTip>
+
+        <CollapsedTip show={collapsed} label="Expand">
+          <button
+            onClick={() => setCollapsed((c) => !c)}
+            className={cn(
+              "flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent/60",
+              collapsed && "justify-center"
             )}
           >
             <HugeiconsIcon
-              icon={Settings01Icon}
+              icon={collapsed ? ArrowRight01Icon : ArrowLeft01Icon}
               size={18}
               className="shrink-0"
             />
-            {!collapsed && "Settings"}
-          </Link>
-        )}
-
-        <button
-          onClick={handleLogout}
-          title={collapsed ? "Log out" : undefined}
-          className={cn(
-            "flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent/60",
-            collapsed && "justify-center"
-          )}
-        >
-          <HugeiconsIcon icon={Logout01Icon} size={18} className="shrink-0" />
-          {!collapsed && "Log out"}
-        </button>
-
-        <button
-          onClick={() => setCollapsed((c) => !c)}
-          title={collapsed ? "Expand" : undefined}
-          className={cn(
-            "flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent/60",
-            collapsed && "justify-center"
-          )}
-        >
-          <HugeiconsIcon
-            icon={collapsed ? ArrowRight01Icon : ArrowLeft01Icon}
-            size={18}
-            className="shrink-0"
-          />
-          {!collapsed && "Collapse"}
-        </button>
+            {!collapsed && "Collapse"}
+          </button>
+        </CollapsedTip>
       </div>
     </aside>
   );
