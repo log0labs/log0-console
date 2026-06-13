@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useAuthStore } from "@/store/auth";
 import { cn } from "@/lib/utils";
 
 const SETTINGS_TABS = [
@@ -16,11 +19,22 @@ export default function SettingsLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const role = useAuthStore((s) => s.role);
+  const authReady = useAuthStore((s) => s.authReady);
+
+  useEffect(() => {
+    if (authReady && role !== "ADMIN") {
+      router.replace("/dashboard");
+    }
+  }, [authReady, role, router]);
+
+  if (!authReady || role !== "ADMIN") return null;
 
   return (
     <div className="flex h-full">
       {/* Secondary left panel */}
-      <aside className="w-[200px] shrink-0 border-r bg-background">
+      <aside className="w-50 shrink-0 border-r bg-background">
         <div className="px-4 py-4">
           <p className="mb-3 text-xs font-medium tracking-wider text-muted-foreground uppercase">
             Settings
