@@ -31,14 +31,8 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-// Level badge 
-
-const LEVEL_CLASS: Record<string, string> = {
-  ERROR: "bg-red-500/15 text-red-600 border-red-500/30 dark:text-red-400",
-  WARN: "bg-orange-500/15 text-orange-600 border-orange-500/30 dark:text-orange-400",
-  INFO: "bg-blue-500/15 text-blue-500 border-blue-500/30 dark:text-blue-400",
-  DEBUG: "bg-muted text-muted-foreground border-border",
-};
+// Level badge - central tokens (lib/theme/tokens.ts)
+import { logLevelBadge as LEVEL_CLASS } from "@/lib/theme/tokens";
 
 function LevelBadge({ level }: { level: string }) {
   return (

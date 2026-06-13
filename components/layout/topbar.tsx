@@ -4,11 +4,12 @@ import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/auth";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { Role } from "@/store/auth";
+import { roleBadge as ROLE_CLASS } from "@/lib/theme/tokens";
 
 const PAGE_TITLES: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/incidents": "Incidents",
+  "/logs": "Logs",
   "/settings/users": "Settings · Members",
   "/settings/api-keys": "Settings · API Keys",
   "/settings/workspace": "Settings · Workspace",
@@ -19,12 +20,6 @@ function getTitle(pathname: string): string {
   if (pathname.startsWith("/incidents/")) return "Incident Detail";
   return "log0";
 }
-
-const ROLE_CLASS: Record<Role, string> = {
-  ADMIN: "bg-primary/15 text-primary border-primary/30",
-  ENGINEER: "bg-blue-500/15 text-blue-500 border-blue-500/30",
-  VIEWER: "bg-muted text-muted-foreground border-border",
-};
 
 export function Topbar() {
   const pathname = usePathname();

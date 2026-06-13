@@ -40,24 +40,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { IncidentStatus, Severity } from "@/types/incident";
+import {
+  severityFill as SEVERITY_FILL,
+  statusFill as STATUS_FILL,
+  severityBadge as SEVERITY_CLASS,
+  statusBadge as STATUS_CLASS,
+  chartAccent,
+} from "@/lib/theme/tokens";
 
-// ── Colors ────────────────────────────────────────────────────────────────────
-
-const EMERALD = "#10b981";
-
-const SEVERITY_FILL: Record<Severity, string> = {
-  CRITICAL: "#ef4444",
-  HIGH: "#f97316",
-  MEDIUM: "#eab308",
-  LOW: "#3b82f6",
-};
-
-const STATUS_FILL: Record<IncidentStatus, string> = {
-  NEW: "#ef4444",
-  ASSIGNED: "#f97316",
-  ACKNOWLEDGED: "#3b82f6",
-  RESOLVED: "#10b981",
-};
+// ── Colors come from lib/theme/tokens.ts (central, theme-driven) ───────────────
 
 const STATUS_LABEL: Record<IncidentStatus, string> = {
   NEW: "New",
@@ -69,28 +60,8 @@ const STATUS_LABEL: Record<IncidentStatus, string> = {
 // ── Chart configs ─────────────────────────────────────────────────────────────
 
 const countConfig = {
-  count: { label: "Incidents", color: EMERALD },
+  count: { label: "Incidents", color: chartAccent },
 } satisfies ChartConfig;
-
-// ── Badge styles ──────────────────────────────────────────────────────────────
-
-const SEVERITY_CLASS: Record<Severity, string> = {
-  CRITICAL: "bg-red-500/15 text-red-600 border-red-500/30 dark:text-red-400",
-  HIGH: "bg-orange-500/15 text-orange-600 border-orange-500/30 dark:text-orange-400",
-  MEDIUM:
-    "bg-yellow-500/15 text-yellow-600 border-yellow-500/30 dark:text-yellow-400",
-  LOW: "bg-blue-500/15 text-blue-500 border-blue-500/30 dark:text-blue-400",
-};
-
-const STATUS_CLASS: Record<IncidentStatus, string> = {
-  NEW: "bg-red-500/15 text-red-600 border-red-500/30 dark:text-red-400",
-  ASSIGNED:
-    "bg-yellow-500/15 text-yellow-600 border-yellow-500/30 dark:text-yellow-400",
-  ACKNOWLEDGED:
-    "bg-blue-500/15 text-blue-500 border-blue-500/30 dark:text-blue-400",
-  RESOLVED:
-    "bg-green-500/15 text-green-600 border-green-500/30 dark:text-green-400",
-};
 
 // ── Custom tooltip for Cell-colored bars ──────────────────────────────────────
 
@@ -277,7 +248,7 @@ export default function DashboardPage() {
   // CSS variables (hsl(var(--x))) don't resolve inside SVG fill/stroke attrs.
   // Use hardcoded values that work on the dark background.
 
-  const axisTick = { fontSize: 11, fill: "#6b7280" };
+  const axisTick = { fontSize: 11, fill: "var(--muted-foreground)" };
   const gridStroke = "rgba(255,255,255,0.08)";
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -299,25 +270,25 @@ export default function DashboardPage() {
           value={stats?.open ?? 0}
           description="New + Assigned"
           loading={isLoading}
-          accent="#f97316"
+          accent={STATUS_FILL.ASSIGNED}
         />
         <StatCard
           title="Acknowledged"
           value={stats?.byStatus.ACKNOWLEDGED ?? 0}
           loading={isLoading}
-          accent="#3b82f6"
+          accent={STATUS_FILL.ACKNOWLEDGED}
         />
         <StatCard
           title="Resolved"
           value={stats?.byStatus.RESOLVED ?? 0}
           loading={isLoading}
-          accent={EMERALD}
+          accent={STATUS_FILL.RESOLVED}
         />
       </div>
 
       {/* Timeline + Status donut */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Timeline — 2/3 width */}
+        {/* Timeline - 2/3 width */}
         <Card className="lg:col-span-2">
           <CardHeader className="pt-5 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -355,7 +326,7 @@ export default function DashboardPage() {
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Bar
                     dataKey="count"
-                    fill={EMERALD}
+                    fill={chartAccent}
                     radius={[4, 4, 0, 0]}
                     minPointSize={2}
                   />
@@ -365,7 +336,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Status donut — 1/3 width */}
+        {/* Status donut - 1/3 width */}
         <Card>
           <CardHeader className="pt-5 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -411,7 +382,7 @@ export default function DashboardPage() {
                                 style={{
                                   fontSize: "1.6rem",
                                   fontWeight: 700,
-                                  fill: "#f9fafb",
+                                  fill: "var(--foreground)",
                                 }}
                               >
                                 {stats?.total ?? 0}
@@ -421,7 +392,7 @@ export default function DashboardPage() {
                                 y={(viewBox.cy || 0) + 20}
                                 style={{
                                   fontSize: "0.7rem",
-                                  fill: "#6b7280",
+                                  fill: "var(--muted-foreground)",
                                 }}
                               >
                                 total
@@ -547,7 +518,7 @@ export default function DashboardPage() {
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Bar
                     dataKey="count"
-                    fill={EMERALD}
+                    fill={chartAccent}
                     radius={[0, 4, 4, 0]}
                     minPointSize={3}
                   />

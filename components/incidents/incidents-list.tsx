@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 
 import { useIncidents } from "@/hooks/use-incidents";
 import type { Incident, IncidentStatus, Severity } from "@/types/incident";
+import { severityBadge, statusBadge } from "@/lib/theme/tokens";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,51 +36,20 @@ import {
 
 const SEVERITY_CONFIG: Record<Severity, { label: string; className: string }> =
   {
-    CRITICAL: {
-      label: "Critical",
-      className:
-        "bg-red-500/15 text-red-600 border-red-500/30 dark:text-red-400",
-    },
-    HIGH: {
-      label: "High",
-      className:
-        "bg-orange-500/15 text-orange-600 border-orange-500/30 dark:text-orange-400",
-    },
-    MEDIUM: {
-      label: "Medium",
-      className:
-        "bg-yellow-500/15 text-yellow-600 border-yellow-500/30 dark:text-yellow-400",
-    },
-    LOW: {
-      label: "Low",
-      className:
-        "bg-blue-500/15 text-blue-500 border-blue-500/30 dark:text-blue-400",
-    },
+    CRITICAL: { label: "Critical", className: severityBadge.CRITICAL },
+    HIGH: { label: "High", className: severityBadge.HIGH },
+    MEDIUM: { label: "Medium", className: severityBadge.MEDIUM },
+    LOW: { label: "Low", className: severityBadge.LOW },
   };
 
 const STATUS_CONFIG: Record<
   IncidentStatus,
   { label: string; className: string }
 > = {
-  NEW: {
-    label: "New",
-    className: "bg-red-500/15 text-red-600 border-red-500/30 dark:text-red-400",
-  },
-  ASSIGNED: {
-    label: "Assigned",
-    className:
-      "bg-yellow-500/15 text-yellow-600 border-yellow-500/30 dark:text-yellow-400",
-  },
-  ACKNOWLEDGED: {
-    label: "Acknowledged",
-    className:
-      "bg-blue-500/15 text-blue-500 border-blue-500/30 dark:text-blue-400",
-  },
-  RESOLVED: {
-    label: "Resolved",
-    className:
-      "bg-green-500/15 text-green-600 border-green-500/30 dark:text-green-400",
-  },
+  NEW: { label: "New", className: statusBadge.NEW },
+  ASSIGNED: { label: "Assigned", className: statusBadge.ASSIGNED },
+  ACKNOWLEDGED: { label: "Acknowledged", className: statusBadge.ACKNOWLEDGED },
+  RESOLVED: { label: "Resolved", className: statusBadge.RESOLVED },
 };
 
 function SeverityBadge({ severity }: { severity: Severity }) {

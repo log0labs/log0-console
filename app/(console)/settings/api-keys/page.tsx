@@ -46,10 +46,10 @@ function RevealedKey({
   }
 
   return (
-    <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-4">
+    <div className="rounded-lg border border-primary/40 bg-primary/10 p-4">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-xs font-medium text-emerald-400">
-          Copy this key now — it will not be shown again
+        <p className="text-xs font-medium text-primary">
+          Copy this key now - it will not be shown again
         </p>
         <button
           onClick={onDismiss}
@@ -217,7 +217,7 @@ export default function ApiKeysPage() {
                         variant="outline"
                         className={
                           key.active
-                            ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-400"
+                            ? "border-primary/30 bg-primary/15 text-primary"
                             : "border-border bg-muted text-muted-foreground"
                         }
                       >
@@ -263,7 +263,7 @@ export default function ApiKeysPage() {
                           </Button>
                         )
                       ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
+                        <span className="text-xs text-muted-foreground">-</span>
                       )}
                     </TableCell>
                   </TableRow>

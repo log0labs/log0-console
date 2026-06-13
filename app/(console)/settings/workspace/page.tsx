@@ -63,7 +63,7 @@ export default function WorkspacePage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 pb-5">
-          <CopyField label="Tenant ID" value={tenantId ?? "—"} />
+          <CopyField label="Tenant ID" value={tenantId ?? "-"} />
 
           <div className="flex flex-col gap-1.5">
             <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
@@ -93,20 +93,18 @@ export default function WorkspacePage() {
             <p className="mb-2 font-medium text-foreground">Required headers</p>
             <div className="flex flex-col gap-1 font-mono">
               <span>
-                <span className="text-emerald-400">X-API-KEY</span>:
-                your_api_key
+                <span className="text-primary">X-API-KEY</span>: your_api_key
               </span>
               <span>
-                <span className="text-emerald-400">X-TENANT-ID</span>:{" "}
+                <span className="text-primary">X-TENANT-ID</span>:{" "}
                 {tenantId ?? "your_tenant_id"}
               </span>
               <span>
-                <span className="text-emerald-400">X-SERVICE-NAME</span>:
+                <span className="text-primary">X-SERVICE-NAME</span>:
                 your-service
               </span>
               <span>
-                <span className="text-emerald-400">X-ENVIRONMENT</span>:
-                production
+                <span className="text-primary">X-ENVIRONMENT</span>: production
               </span>
             </div>
           </div>

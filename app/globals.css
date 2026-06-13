@@ -38,6 +38,17 @@
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
+  /* semantic data colors (severity / status / accents) → utility classes */
+  --color-severity-critical: var(--severity-critical);
+  --color-severity-high: var(--severity-high);
+  --color-severity-medium: var(--severity-medium);
+  --color-severity-low: var(--severity-low);
+  --color-status-new: var(--status-new);
+  --color-status-assigned: var(--status-assigned);
+  --color-status-acknowledged: var(--status-acknowledged);
+  --color-status-resolved: var(--status-resolved);
+  --color-accent-purple: var(--accent-purple);
+  --color-data-grey: var(--data-grey);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -47,73 +58,169 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+  THEME TOKENS - three tiers (GitHub/Primer-style):
+
+  1. PRIMITIVES  (--p-*)  - raw color scale, mode-agnostic. The ONLY hex.
+  2. SEMANTICS   (--background, --severity-*, …) - reference primitives;
+     light = :root, dark = .dark pick different scale steps.
+  3. Components/charts consume semantics only (via lib/theme/tokens.ts) - never
+     primitives, never hex.
+
+  Active palette = "cool". Add a palette = override the --p-* primitives under a
+  selector (semantics inherit automatically), then register in
+  lib/theme/palettes.ts and set data-palette on <html>:
+      [data-palette="warm"]      { --p-…: … }   (light primitives)
+      .dark[data-palette="warm"] { --p-…: … }   (dark primitives)
+  High-contrast / colorblind variants work the same way.
+*/
+
+/* ── 1 · PRIMITIVES (cool palette) ──────────────────────────────────────── */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.508 0.118 165.612);
-  --primary-foreground: oklch(0.979 0.021 166.113);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.845 0.143 164.978);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.596 0.145 163.225);
-  --chart-4: oklch(0.508 0.118 165.612);
-  --chart-5: oklch(0.432 0.095 166.913);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.596 0.145 163.225);
-  --sidebar-primary-foreground: oklch(0.979 0.021 166.113);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* brand + secondary */
+  --p-green: #0ba06b;
+  --p-green-bright: #22c58a; /* on dark */
+  --p-green-ink: #06231a; /* fg on green */
+  --p-purple: #7c5cd6; /* on light */
+  --p-purple-soft: #a78bfa; /* on dark */
+
+  /* severity / status hues - two steps each (deep=light, muted=dark) */
+  --p-red: #c05a57;
+  --p-red-deep: #b0413c;
+  --p-amber: #be854f;
+  --p-amber-deep: #9a6b2e;
+  --p-gold: #ae9a52;
+  --p-gold-deep: #87711f;
+  --p-blue: #5e83a8;
+  --p-blue-deep: #3f6491;
+  --p-sage: #4e9e78; /* resolved on dark */
+
+  /* warm neutrals (surfaces) */
+  --p-cream: #f4f1ea;
+  --p-cream-2: #ece7dd;
+  --p-cream-3: #efece4;
+  --p-cream-border: #e4ded2;
+  --p-white: #ffffff;
+  --p-near-black: #161310; /* website panel */
+  --p-near-black-2: #110e0c;
+  --p-surface-dark: #221e1a;
+
+  /* text */
+  --p-ink: #1b1815;
+  --p-ink-muted: #6b6862;
+  --p-text-cool: #dde2e8;
+  --p-text-cool-muted: #828b97;
+
+  /* neutral data greys */
+  --p-grey-light: #c9c3b6;
+  --p-grey-light-2: #b3ac9e;
+  --p-grey-dark: #4a463f;
+  --p-grey-dark-2: #6e675e;
+
+  /* danger (destructive) */
+  --p-danger: oklch(0.577 0.245 27.325);
+  --p-danger-dark: oklch(0.704 0.191 22.216);
+
+  /* alpha overlays for dark borders/inputs */
+  --p-white-a09: oklch(1 0 0 / 9%);
+  --p-white-a14: oklch(1 0 0 / 14%);
 }
 
+/* ── 2 · SEMANTICS · light ──────────────────────────────────────────────── */
+:root {
+  --background: var(--p-cream);
+  --foreground: var(--p-ink);
+  --card: var(--p-white);
+  --card-foreground: var(--p-ink);
+  --popover: var(--p-white);
+  --popover-foreground: var(--p-ink);
+  --primary: var(--p-green);
+  --primary-foreground: var(--p-white);
+  --secondary: var(--p-cream-2);
+  --secondary-foreground: var(--p-ink);
+  --muted: var(--p-cream-2);
+  --muted-foreground: var(--p-ink-muted);
+  --accent: var(--p-cream-2);
+  --accent-foreground: var(--p-ink);
+  --destructive: var(--p-danger);
+  --border: var(--p-cream-border);
+  --input: var(--p-cream-border);
+  --ring: var(--p-green);
+
+  --severity-critical: var(--p-red-deep);
+  --severity-high: var(--p-amber-deep);
+  --severity-medium: var(--p-gold-deep);
+  --severity-low: var(--p-blue-deep);
+  --status-new: var(--p-red-deep);
+  --status-assigned: var(--p-amber-deep);
+  --status-acknowledged: var(--p-blue-deep);
+  --status-resolved: var(--p-green);
+  --accent-purple: var(--p-purple);
+  --data-grey: var(--p-grey-light);
+
+  --chart-1: var(--p-green);
+  --chart-2: var(--p-purple);
+  --chart-3: var(--p-blue-deep);
+  --chart-4: var(--p-amber-deep);
+  --chart-5: var(--p-grey-light-2);
+
+  --radius: 0.625rem;
+  --sidebar: var(--p-cream-3);
+  --sidebar-foreground: var(--p-ink);
+  --sidebar-primary: var(--p-green);
+  --sidebar-primary-foreground: var(--p-white);
+  --sidebar-accent: var(--p-cream-2);
+  --sidebar-accent-foreground: var(--p-ink);
+  --sidebar-border: var(--p-cream-border);
+  --sidebar-ring: var(--p-green);
+}
+
+/* ── 2 · SEMANTICS · dark ───────────────────────────────────────────────── */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.432 0.095 166.913);
-  --primary-foreground: oklch(0.979 0.021 166.113);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.845 0.143 164.978);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.596 0.145 163.225);
-  --chart-4: oklch(0.508 0.118 165.612);
-  --chart-5: oklch(0.432 0.095 166.913);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.696 0.17 162.48);
-  --sidebar-primary-foreground: oklch(0.262 0.051 172.552);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: var(--p-near-black);
+  --foreground: var(--p-text-cool);
+  --card: var(--p-near-black);
+  --card-foreground: var(--p-text-cool);
+  --popover: var(--p-near-black);
+  --popover-foreground: var(--p-text-cool);
+  --primary: var(--p-green-bright);
+  --primary-foreground: var(--p-green-ink);
+  --secondary: var(--p-surface-dark);
+  --secondary-foreground: var(--p-text-cool);
+  --muted: var(--p-surface-dark);
+  --muted-foreground: var(--p-text-cool-muted);
+  --accent: var(--p-surface-dark);
+  --accent-foreground: var(--p-text-cool);
+  --destructive: var(--p-danger-dark);
+  --border: var(--p-white-a09);
+  --input: var(--p-white-a14);
+  --ring: var(--p-green-bright);
+
+  --severity-critical: var(--p-red);
+  --severity-high: var(--p-amber);
+  --severity-medium: var(--p-gold);
+  --severity-low: var(--p-blue);
+  --status-new: var(--p-red);
+  --status-assigned: var(--p-amber);
+  --status-acknowledged: var(--p-blue);
+  --status-resolved: var(--p-sage);
+  --accent-purple: var(--p-purple-soft);
+  --data-grey: var(--p-grey-dark);
+
+  --chart-1: var(--p-green-bright);
+  --chart-2: var(--p-purple-soft);
+  --chart-3: var(--p-blue);
+  --chart-4: var(--p-amber);
+  --chart-5: var(--p-grey-dark-2);
+
+  --sidebar: var(--p-near-black-2);
+  --sidebar-foreground: var(--p-text-cool);
+  --sidebar-primary: var(--p-green-bright);
+  --sidebar-primary-foreground: var(--p-green-ink);
+  --sidebar-accent: var(--p-surface-dark);
+  --sidebar-accent-foreground: var(--p-text-cool);
+  --sidebar-border: var(--p-white-a09);
+  --sidebar-ring: var(--p-green-bright);
 }
 
 @layer base {
@@ -125,5 +232,35 @@
   }
   html {
     @apply font-sans;
+  }
+
+  /* thin custom scrollbar - 4px, no arrows, no track box */
+  * {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: color-mix(in srgb, var(--foreground) 22%, transparent)
+      transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--foreground) 22%, transparent);
+    border-radius: 9999px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--foreground) 38%, transparent);
+  }
+  /* kill the up/down arrow buttons + corner */
+  *::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+  *::-webkit-scrollbar-corner {
+    background: transparent;
   }
 }

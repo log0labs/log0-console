@@ -21,27 +21,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { IncidentStatus, Severity } from "@/types/incident";
+import type { IncidentStatus } from "@/types/incident";
+import {
+  severityBadge as SEVERITY_CLASS,
+  statusBadge as STATUS_CLASS,
+  logLevelText,
+} from "@/lib/theme/tokens";
 
-// ── Badge configs ─────────────────────────────────────────────────────────────
-
-const SEVERITY_CLASS: Record<Severity, string> = {
-  CRITICAL: "bg-red-500/15 text-red-600 border-red-500/30 dark:text-red-400",
-  HIGH: "bg-orange-500/15 text-orange-600 border-orange-500/30 dark:text-orange-400",
-  MEDIUM:
-    "bg-yellow-500/15 text-yellow-600 border-yellow-500/30 dark:text-yellow-400",
-  LOW: "bg-blue-500/15 text-blue-500 border-blue-500/30 dark:text-blue-400",
-};
-
-const STATUS_CLASS: Record<IncidentStatus, string> = {
-  NEW: "bg-red-500/15 text-red-600 border-red-500/30 dark:text-red-400",
-  ASSIGNED:
-    "bg-yellow-500/15 text-yellow-600 border-yellow-500/30 dark:text-yellow-400",
-  ACKNOWLEDGED:
-    "bg-blue-500/15 text-blue-500 border-blue-500/30 dark:text-blue-400",
-  RESOLVED:
-    "bg-green-500/15 text-green-600 border-green-500/30 dark:text-green-400",
-};
+// Badge styles come from lib/theme/tokens.ts (central, theme-driven).
 
 const STATUS_LABEL: Record<IncidentStatus, string> = {
   NEW: "New",
@@ -65,10 +52,12 @@ function fmtDate(iso: string) {
 function AssignPanel({
   incidentId,
   tenantId,
+  label = "Assign",
   onDone,
 }: {
   incidentId: string;
   tenantId: string;
+  label?: string;
   onDone: () => void;
 }) {
   const userId = useAuthStore((s) => s.userId);
@@ -130,7 +119,7 @@ function AssignPanel({
         disabled={!assigneeId || assign.isPending}
         onClick={() => assign.mutate()}
       >
-        {assign.isPending ? "Assigning…" : "Assign"}
+        {assign.isPending ? "Assigning…" : label}
       </Button>
       <Button size="sm" variant="ghost" className="h-8" onClick={onDone}>
         Cancel
@@ -147,6 +136,7 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
   const tenantId = useAuthStore((s) => s.tenantId);
   const queryClient = useQueryClient();
   const [showAssign, setShowAssign] = useState(false);
+  const [isReassign, setIsReassign] = useState(false);
 
   const { data: incident, isLoading, isError } = useIncident(incidentId);
   const { data: logsPage } = useIncidentLogs(incidentId);
@@ -158,6 +148,9 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
 
   // Assign: NEW status, ADMIN only
   const showAssignBtn = incident?.status === "NEW" && isAdmin;
+
+  // Reassign: ASSIGNED status, ADMIN only
+  const showReassignBtn = incident?.status === "ASSIGNED" && isAdmin;
 
   // Acknowledge: ASSIGNED status, ADMIN or the assigned engineer
   const assignedTo = incident?.assignment?.assignedToUserId;
@@ -263,46 +256,63 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
       </div>
 
       {/* Action buttons */}
-      {(showAssignBtn || showAcknowledge || showResolve) && !showAssign && (
-        <div className="flex flex-wrap gap-2">
-          {showAssignBtn && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowAssign(true)}
-            >
-              Assign
-            </Button>
-          )}
-          {showAcknowledge && (
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={acknowledge.isPending}
-              onClick={() => acknowledge.mutate()}
-            >
-              {acknowledge.isPending ? "Acknowledging…" : "Acknowledge"}
-            </Button>
-          )}
-          {showResolve && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10"
-              disabled={resolve.isPending}
-              onClick={() => resolve.mutate()}
-            >
-              {resolve.isPending ? "Resolving…" : "Resolve"}
-            </Button>
-          )}
-        </div>
-      )}
+      {(showAssignBtn || showReassignBtn || showAcknowledge || showResolve) &&
+        !showAssign && (
+          <div className="flex flex-wrap gap-2">
+            {showAssignBtn && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setIsReassign(false);
+                  setShowAssign(true);
+                }}
+              >
+                Assign
+              </Button>
+            )}
+            {showReassignBtn && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setIsReassign(true);
+                  setShowAssign(true);
+                }}
+              >
+                Reassign
+              </Button>
+            )}
+            {showAcknowledge && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={acknowledge.isPending}
+                onClick={() => acknowledge.mutate()}
+              >
+                {acknowledge.isPending ? "Acknowledging…" : "Acknowledge"}
+              </Button>
+            )}
+            {showResolve && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-status-resolved/40 text-status-resolved hover:bg-status-resolved/10"
+                disabled={resolve.isPending}
+                onClick={() => resolve.mutate()}
+              >
+                {resolve.isPending ? "Resolving…" : "Resolve"}
+              </Button>
+            )}
+          </div>
+        )}
 
-      {/* Assign panel (inline) */}
+      {/* Assign / Reassign panel (inline) */}
       {showAssign && (
         <AssignPanel
           incidentId={incidentId}
           tenantId={tenantId!}
+          label={isReassign ? "Reassign" : "Assign"}
           onDone={() => setShowAssign(false)}
         />
       )}
@@ -411,7 +421,9 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
                   className="rounded-md border bg-muted/20 p-3 text-xs"
                 >
                   <div className="mb-1 flex items-center gap-2">
-                    <span className="font-mono font-medium text-red-500">
+                    <span
+                      className={`font-mono font-medium ${logLevelText[log.level] ?? "text-muted-foreground"}`}
+                    >
                       {log.level}
                     </span>
                     <span className="text-muted-foreground">

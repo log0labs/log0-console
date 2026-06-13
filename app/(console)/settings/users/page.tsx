@@ -38,13 +38,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-// ── Role badge ────────────────────────────────────────────────────────────────
-
-const ROLE_CLASS: Record<string, string> = {
-  ADMIN: "bg-primary/15 text-primary border-primary/30",
-  ENGINEER: "bg-blue-500/15 text-blue-500 border-blue-500/30",
-  VIEWER: "bg-muted text-muted-foreground border-border",
-};
+// ── Role badge - central tokens (lib/theme/tokens.ts) ─────────────────────────
+import { roleBadge as ROLE_CLASS } from "@/lib/theme/tokens";
 
 // ── Create user form ──────────────────────────────────────────────────────────
 
@@ -120,6 +115,7 @@ function AddMemberForm({ onSuccess }: { onSuccess: () => void }) {
         <div className="flex flex-col gap-1.5">
           <Label>Role</Label>
           <Select
+            /* eslint-disable-next-line react-hooks/incompatible-library */
             value={watch("role")}
             onValueChange={(v) =>
               setValue("role", v as "ADMIN" | "ENGINEER" | "VIEWER")
