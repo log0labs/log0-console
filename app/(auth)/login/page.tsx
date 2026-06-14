@@ -11,17 +11,10 @@ import { toast } from "sonner";
 import { authApi } from "@/lib/api";
 import { decodeJwt } from "@/lib/jwt";
 import { useAuthStore } from "@/store/auth";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { GeistPixelLine } from "geist/font/pixel";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -74,60 +67,75 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>Welcome back</CardTitle>
-        <CardDescription>Sign in to your log0 workspace</CardDescription>
-      </CardHeader>
+    <div className="flex flex-col gap-8">
+      {/* mark - gives brand context on mobile (panel hidden < lg) */}
+      <div className="flex items-center gap-2 lg:hidden">
+        {/* <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
+          L
+        </span> */}
+        <a
+          href="https://log0.vercel.app/"
+          className={`${GeistPixelLine.className} text-lg font-medium tracking-tight`}
+        >
+          log0
+        </a>
+      </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <CardContent className="space-y-4">
-          {serverError && (
-            <p className="text-sm text-destructive">{serverError}</p>
+      <div className="space-y-1.5">
+        <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
+        <p className="text-sm text-muted-foreground">
+          Sign in to your log0 workspace
+        </p>
+      </div>
+
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
+        className="flex flex-col gap-4"
+      >
+        {serverError && (
+          <p className="text-sm text-destructive">{serverError}</p>
+        )}
+
+        <div className="space-y-1.5">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@company.com"
+            autoComplete="email"
+            {...register("email")}
+          />
+          {errors.email && (
+            <p className="text-xs text-destructive">{errors.email.message}</p>
           )}
+        </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@company.com"
-              autoComplete="email"
-              {...register("email")}
-            />
-            {errors.email && (
-              <p className="text-xs text-destructive">{errors.email.message}</p>
-            )}
-          </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            autoComplete="current-password"
+            {...register("password")}
+          />
+          {errors.password && (
+            <p className="text-xs text-destructive">
+              {errors.password.message}
+            </p>
+          )}
+        </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              {...register("password")}
-            />
-            {errors.password && (
-              <p className="text-xs text-destructive">
-                {errors.password.message}
-              </p>
-            )}
-          </div>
-        </CardContent>
-
-        <CardFooter className="mt-2 flex flex-col gap-3">
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Signing in…" : "Sign in"}
-          </Button>
-          <p className="text-sm text-muted-foreground">
-            No account?{" "}
-            <Link href="/register" className="text-foreground underline">
-              Create a workspace
-            </Link>
-          </p>
-        </CardFooter>
+        <Button type="submit" className="mt-2 w-full" disabled={isSubmitting}>
+          {isSubmitting ? "Signing in…" : "Sign in"}
+        </Button>
+        <p className="text-sm text-muted-foreground">
+          No account?{" "}
+          <Link href="/register" className="text-foreground underline">
+            Create a workspace
+          </Link>
+        </p>
       </form>
-    </Card>
+    </div>
   );
 }
