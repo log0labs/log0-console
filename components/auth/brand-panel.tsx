@@ -36,17 +36,42 @@ export function BrandPanel() {
 
       {/* content overlay */}
       <div className="relative flex h-full flex-col justify-between p-10 text-[#dde2e8]">
-        <div className="flex items-center gap-2.5">
-          {/* <span className="flex h-7 w-7 items-center justify-center rounded-md bg-[#22c58a] text-xs font-bold text-[#06231a]">
-            L
-          </span> */}
-          <a
-            href="https://log0.vercel.app/"
+        <a
+          href="https://log0.vercel.app/"
+          className="flex items-center gap-2.5"
+        >
+          {/* log0 convergence mark: log-dots stream into one incident dot */}
+          <svg
+            viewBox="0 0 32 32"
+            fill="none"
+            aria-hidden="true"
+            className="h-6 w-6"
+          >
+            <g stroke="#22c58a" strokeWidth="1.6" opacity="0.55">
+              <line x1="16" y1="7" x2="26" y2="16" />
+              <line x1="16" y1="16" x2="26" y2="16" />
+              <line x1="16" y1="25" x2="26" y2="16" />
+            </g>
+            <g fill="#22c58a">
+              <circle cx="5" cy="7" r="1.5" opacity="0.45" />
+              <circle cx="5" cy="16" r="1.5" opacity="0.45" />
+              <circle cx="5" cy="25" r="1.5" opacity="0.45" />
+              <circle cx="11" cy="7" r="1.6" opacity="0.7" />
+              <circle cx="11" cy="16" r="1.6" opacity="0.7" />
+              <circle cx="11" cy="25" r="1.6" opacity="0.7" />
+              <circle cx="16" cy="7" r="1.7" />
+              <circle cx="16" cy="16" r="1.7" />
+              <circle cx="16" cy="25" r="1.7" />
+            </g>
+            <circle cx="26" cy="16" r="6" fill="#22c58a" opacity="0.18" />
+            <circle cx="26" cy="16" r="3.6" fill="#22c58a" />
+          </svg>
+          <span
             className={`${GeistPixelLine.className} text-lg font-medium tracking-tight`}
           >
             log0
-          </a>
-        </div>
+          </span>
+        </a>
 
         <h2 className="max-w-md text-4xl leading-snug font-medium tracking-tight">
           From 10,000 logs <br /> to one incident.
