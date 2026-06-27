@@ -10,6 +10,7 @@ import { toast } from "sonner";
 
 import { authApi } from "@/lib/api";
 import { decodeJwt } from "@/lib/jwt";
+import { links } from "@/lib/links";
 import { useAuthStore } from "@/store/auth";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -74,7 +75,7 @@ export default function LoginPage() {
           L
         </span> */}
         <a
-          href="https://log0.vercel.app/"
+          href={links.website}
           className={`${GeistPixelLine.className} text-lg font-medium tracking-tight`}
         >
           log0

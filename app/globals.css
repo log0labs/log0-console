@@ -263,4 +263,14 @@
   *::-webkit-scrollbar-corner {
     background: transparent;
   }
+
+  /* text selection - brand green (matches log0-website) */
+  ::selection {
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+  ::-moz-selection {
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
 }

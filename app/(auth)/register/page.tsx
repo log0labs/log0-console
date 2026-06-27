@@ -9,6 +9,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 
 import { authApi } from "@/lib/api";
+import { links } from "@/lib/links";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -98,7 +99,7 @@ export default function RegisterPage() {
           L
         </span> */}
         <a
-          href="https://log0.vercel.app/"
+          href={links.website}
           className={`${GeistPixelLine.className} text-lg font-medium tracking-tight`}
         >
           log0

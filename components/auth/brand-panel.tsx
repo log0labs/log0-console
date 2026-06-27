@@ -1,5 +1,6 @@
 import { GeistPixelLine } from "geist/font/pixel";
 import { AuthBackdrop } from "./auth-backdrop";
+import { links } from "@/lib/links";
 
 /*
   Auth brand panel (right column, lg+). Always near-black so the brand reads the
@@ -37,7 +38,7 @@ export function BrandPanel() {
       {/* content overlay */}
       <div className="relative flex h-full flex-col justify-between p-10 text-[#dde2e8]">
         <a
-          href="https://log0.vercel.app/"
+          href={links.website}
           className="flex items-center gap-2.5"
         >
           {/* log0 convergence mark: log-dots stream into one incident dot */}
@@ -79,16 +80,16 @@ export function BrandPanel() {
 
         <div className="flex items-center gap-4 font-mono text-xs text-[#828b97]">
           {/* <a
-            href="https://github.com/ashmitjsg/log0-services"
+            href={links.github}
             target="_blank"
             rel="noopener noreferrer"
             className="transition-colors hover:text-[#dde2e8]"
           >
             Open source
           </a> */}
-          <span className="text-[#3a352f]">·</span>
+          {/* <span className="text-[#3a352f]">·</span> */}
           <a
-            href="https://log0.vercel.app/docs"
+            href={links.docs}
             target="_blank"
             rel="noopener noreferrer"
             className="transition-colors hover:text-[#dde2e8]"
