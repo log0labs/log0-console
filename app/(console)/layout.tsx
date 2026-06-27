@@ -2,6 +2,7 @@
 
 import { useAuthStore } from "@/store/auth";
 import { AuthInitializer } from "@/components/auth-initializer";
+import { ServerStatus } from "@/components/server-status";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 
@@ -30,6 +31,7 @@ export default function ConsoleLayout({
   return (
     <>
       <AuthInitializer />
+      <ServerStatus />
       <AuthGate>
         <div className="flex h-screen overflow-hidden bg-background">
           <Sidebar />
