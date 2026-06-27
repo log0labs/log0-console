@@ -86,7 +86,10 @@ export default function WorkspacePage() {
         <CardContent className="flex flex-col gap-4 pb-5">
           <CopyField
             label="Endpoint"
-            value="http://localhost:8080/api/v1/logs"
+            value={
+              process.env.NEXT_PUBLIC_INGEST_URL ??
+              "http://localhost:8080/api/v1/logs"
+            }
           />
 
           <div className="rounded-md border bg-muted/20 p-3 text-xs text-muted-foreground">

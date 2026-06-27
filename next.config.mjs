@@ -1,35 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  async rewrites() {
-    return [
-      // Auth Service (port 8086)
-      {
-        source: "/api/v1/auth/:path*",
-        destination: `${process.env.AUTH_API_URL}/api/v1/auth/:path*`,
-      },
-      {
-        source: "/api/v1/tenants/:path*",
-        destination: `${process.env.AUTH_API_URL}/api/v1/tenants/:path*`,
-      },
-      {
-        source: "/api/v1/users/:path*",
-        destination: `${process.env.AUTH_API_URL}/api/v1/users/:path*`,
-      },
-      {
-        source: "/api/v1/api-keys/:path*",
-        destination: `${process.env.AUTH_API_URL}/api/v1/api-keys/:path*`,
-      },
-      // Incident Service (port 8083)
-      {
-        source: "/api/v1/incidents/:path*",
-        destination: `${process.env.INCIDENTS_API_URL}/api/v1/incidents/:path*`,
-      },
-      {
-        source: "/api/v1/logs",
-        destination: `${process.env.INCIDENTS_API_URL}/api/v1/logs`,
-      },
-    ];
-  },
+  // /api/v1/* is proxied by the Route Handler at app/api/v1/[...path]/route.ts
+  // (next.config rewrites 500 on Vercel for 200 responses from external origins).
 };
 
 export default nextConfig;
