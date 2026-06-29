@@ -96,6 +96,15 @@ export function BrandPanel() {
           >
             Docs
           </a>
+          <span className="text-[#3a352f]">·</span>
+          <a
+            href={links.blogSeries}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="transition-colors hover:text-[#dde2e8]"
+          >
+            Blog
+          </a>
         </div>
       </div>
     </div>
