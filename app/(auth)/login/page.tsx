@@ -15,6 +15,7 @@ import { useAuthStore } from "@/store/auth";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { SupportBanner } from "@/components/auth/support-banner";
 import { GeistPixelLine } from "geist/font/pixel";
 
 const loginSchema = z.object({
@@ -81,6 +82,8 @@ export default function LoginPage() {
           log0
         </a>
       </div>
+
+      <SupportBanner />
 
       <div className="space-y-1.5">
         <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>

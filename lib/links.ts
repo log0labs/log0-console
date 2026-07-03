@@ -9,4 +9,7 @@ export const links = {
   blog: `${WEBSITE}/blog`,
   blogSeries: "https://engineeringwithashmit.hashnode.dev/series/log0",
   github: "https://github.com/ashmitjsg/log0-services",
+  // Support link shown on the auth pages while the hosted backend is being set up.
+  // Swap this single value if the support destination changes (Ko-fi / Sponsors / etc).
+  support: "https://ko-fi.com/ashmitjsg",
 } as const;
