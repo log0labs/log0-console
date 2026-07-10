@@ -99,10 +99,6 @@ export default function WorkspacePage() {
                 <span className="text-primary">X-API-KEY</span>: your_api_key
               </span>
               <span>
-                <span className="text-primary">X-TENANT-ID</span>:{" "}
-                {tenantId ?? "your_tenant_id"}
-              </span>
-              <span>
                 <span className="text-primary">X-SERVICE-NAME</span>:
                 your-service
               </span>
@@ -110,6 +106,9 @@ export default function WorkspacePage() {
                 <span className="text-primary">X-ENVIRONMENT</span>: production
               </span>
             </div>
+            <p className="mt-2">
+              Your tenant is derived from the API key - no tenant header needed.
+            </p>
           </div>
         </CardContent>
       </Card>
