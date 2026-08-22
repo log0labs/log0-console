@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://log0.in/docs
+    about: Product and architecture documentation.
+  - name: Questions & discussions
+    url: https://github.com/log0labs/log0-console/discussions
+    about: Ask questions and discuss ideas with the community.
+  - name: Report a security vulnerability
+    url: https://github.com/log0labs/log0-console/blob/main/SECURITY.md
+    about: Please report security issues privately, not as a public issue.
