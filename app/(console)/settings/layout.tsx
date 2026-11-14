@@ -11,6 +11,8 @@ const SETTINGS_TABS = [
   { href: "/settings/workspace", label: "Workspace" },
   { href: "/settings/users", label: "Members" },
   { href: "/settings/api-keys", label: "API Keys" },
+  { href: "/settings/ai", label: "AI" },
+  { href: "/settings/repositories", label: "Repositories" },
 ];
 
 export default function SettingsLayout({
