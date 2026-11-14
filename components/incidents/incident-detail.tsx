@@ -10,6 +10,7 @@ import { useIncidentLogs } from "@/hooks/use-incident-logs";
 import { useUsers } from "@/hooks/use-users";
 import { incidentsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
+import { InvestigationPanel } from "@/components/investigations/investigation-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -375,6 +376,8 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
           </p>
         )}
       </div>
+
+      <InvestigationPanel incidentId={incidentId} />
 
       {/* Status history */}
       {incident.statusHistory && incident.statusHistory.length > 0 && (
