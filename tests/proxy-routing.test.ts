@@ -22,6 +22,8 @@ describe("targetBase", () => {
     [["repositories"], "http://ai"],
     [["service-repositories", "payment-service"], "http://ai"],
     [["ai-settings", "investigation", "test"], "http://ai"],
+    [["runbooks"], "http://ai"],
+    [["runbooks", "3f2a"], "http://ai"],
     [["auth", "login"], "http://auth"],
     [["users"], "http://auth"],
     [["api-keys"], "http://auth"],
