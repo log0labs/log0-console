@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Delete02Icon, Upload04Icon } from "@hugeicons/core-free-icons";
+import { Upload04Icon } from "@hugeicons/core-free-icons";
 import { toast } from "sonner";
 
 import {
@@ -19,6 +19,7 @@ import {
 } from "@/lib/runbooks";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
@@ -111,7 +112,6 @@ function UploadForm() {
 }
 
 function RunbookRow({ runbook }: { runbook: Runbook }) {
-  const [confirming, setConfirming] = useState(false);
   const remove = useDeleteRunbook();
 
   return (
@@ -125,41 +125,16 @@ function RunbookRow({ runbook }: { runbook: Runbook }) {
           })}
         </p>
       </div>
-      {confirming ? (
-        <div className="flex shrink-0 gap-1.5">
-          <Button
-            variant="ghost"
-            size="xs"
-            onClick={() => setConfirming(false)}
-          >
-            Keep
-          </Button>
-          <Button
-            variant="destructive"
-            size="xs"
-            disabled={remove.isPending}
-            onClick={() =>
-              remove.mutate(runbook.id, {
-                onError: (e) =>
-                  toast.error(
-                    apiErrorMessage(e, "Could not delete the runbook")
-                  ),
-              })
-            }
-          >
-            Delete
-          </Button>
-        </div>
-      ) : (
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label={`Delete ${runbook.title}`}
-          onClick={() => setConfirming(true)}
-        >
-          <HugeiconsIcon icon={Delete02Icon} size={14} />
-        </Button>
-      )}
+      <ConfirmButton
+        label={`Delete ${runbook.title}`}
+        pending={remove.isPending}
+        onConfirm={() =>
+          remove.mutate(runbook.id, {
+            onError: (e) =>
+              toast.error(apiErrorMessage(e, "Could not delete the runbook")),
+          })
+        }
+      />
     </li>
   );
 }

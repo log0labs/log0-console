@@ -1,6 +1,12 @@
 "use client";
 
+import { toast } from "sonner";
+import { useState } from "react";
 import { useAuthStore } from "@/store/auth";
+import { useRenameTenant, useTenant } from "@/hooks/use-tenant";
+import { apiErrorMessage } from "@/lib/ai-config";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
@@ -17,9 +23,59 @@ function CopyField({ label, value }: { label: string; value: string }) {
       <SectionLabel>{label}</SectionLabel>
       <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2">
         <code className="flex-1 truncate font-mono text-sm">{value}</code>
-        <CopyButton text={value} what={`${label} copied`} label={`Copy ${label}`} />
+        <CopyButton
+          text={value}
+          what={`${label} copied`}
+          label={`Copy ${label}`}
+        />
       </div>
     </div>
+  );
+}
+
+function NameField() {
+  const { data: tenant } = useTenant();
+  const rename = useRenameTenant();
+  const [draft, setDraft] = useState<string | null>(null);
+  const value = draft ?? tenant?.name ?? "";
+  const changed =
+    draft !== null && draft.trim() !== "" && draft.trim() !== tenant?.name;
+
+  return (
+    <form
+      className="flex flex-col gap-1.5"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!changed) return;
+        rename.mutate(draft!.trim(), {
+          onSuccess: () => {
+            setDraft(null);
+            toast.success("Workspace renamed");
+          },
+          onError: (err) =>
+            toast.error(apiErrorMessage(err, "Could not rename")),
+        });
+      }}
+    >
+      <SectionLabel>Name</SectionLabel>
+      <div className="flex gap-2">
+        <Input
+          value={value}
+          maxLength={100}
+          disabled={!tenant}
+          onChange={(e) => setDraft(e.target.value)}
+          aria-label="Workspace name"
+        />
+        <Button
+          type="submit"
+          size="sm"
+          className="h-9"
+          disabled={!changed || rename.isPending}
+        >
+          Save
+        </Button>
+      </div>
+    </form>
   );
 }
 
@@ -46,6 +102,7 @@ export default function WorkspacePage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 pb-5">
+          <NameField />
           <CopyField label="Tenant ID" value={tenantId ?? "-"} />
 
           <div className="flex flex-col gap-1.5">

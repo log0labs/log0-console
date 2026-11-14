@@ -1,10 +1,16 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { incidentsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
-import type { Incident, PageResponse } from "@/types/incident";
+import type {
+  Incident,
+  IncidentFilters,
+  IncidentStats,
+  PageResponse,
+} from "@/types/incident";
 
-// The backend filters only by tenant, so the console loads pages and filters client-side.
-// Every page is loaded up to MAX_PAGES (1,000 incidents); beyond that `truncated` says so.
+// The list page filters and pages on the server (useIncidentPage). The dashboard still needs many
+// incidents for its trend and top services, so useIncidents loads pages up to MAX_PAGES (1,000 incidents);
+// beyond that `truncated` says so. Exact totals come from useIncidentStats.
 const PAGE_SIZE = 100;
 const MAX_PAGES = 10;
 
@@ -42,6 +48,53 @@ export function useIncidents() {
   return useQuery({
     queryKey: ["incidents", tenantId],
     queryFn: () => fetchIncidents(tenantId!),
+    enabled: !!tenantId,
+    refetchInterval: 30_000,
+  });
+}
+
+const LIST_SIZE = 20;
+
+/** One page of the incident list, filtered and sorted by the server. Keeps the old page on screen while the next loads. */
+export function useIncidentPage(filters: IncidentFilters, page: number) {
+  const tenantId = useAuthStore((s) => s.tenantId);
+
+  return useQuery({
+    queryKey: ["incidents", tenantId, "page", filters, page],
+    queryFn: async () => {
+      const { data } = await incidentsApi.get<PageResponse<Incident>>(
+        "/api/v1/incidents",
+        {
+          params: {
+            tenantId,
+            page,
+            size: LIST_SIZE,
+            sort: "lastSeenAt,desc",
+            ...filters,
+          },
+        }
+      );
+      return data;
+    },
+    enabled: !!tenantId,
+    placeholderData: keepPreviousData,
+    refetchInterval: 30_000,
+  });
+}
+
+/** Exact counts per status and severity, and the environments, for the whole tenant. */
+export function useIncidentStats() {
+  const tenantId = useAuthStore((s) => s.tenantId);
+
+  return useQuery({
+    queryKey: ["incidents", tenantId, "stats"],
+    queryFn: async () => {
+      const { data } = await incidentsApi.get<IncidentStats>(
+        "/api/v1/incidents/stats",
+        { params: { tenantId } }
+      );
+      return data;
+    },
     enabled: !!tenantId,
     refetchInterval: 30_000,
   });

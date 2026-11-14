@@ -15,7 +15,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { useIncidents } from "@/hooks/use-incidents";
+import { useIncidents, useIncidentStats } from "@/hooks/use-incidents";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -50,7 +50,6 @@ import {
 } from "@/lib/theme/tokens";
 
 // ── Colors come from lib/theme/tokens.ts (central, theme-driven) ───────────────
-
 
 // ── Chart configs ─────────────────────────────────────────────────────────────
 
@@ -138,6 +137,8 @@ function StatCard({
 export default function DashboardPage() {
   const router = useRouter();
   const { data, isLoading } = useIncidents();
+  // exact counts from the database; the loaded incidents (up to 1,000) feed the trend and top services
+  const { data: exact } = useIncidentStats();
 
   // ── Derived stats ─────────────────────────────────────────────────────────
 
@@ -180,15 +181,16 @@ export default function DashboardPage() {
       )
       .slice(0, 8);
 
+    const exactStatus = exact?.byStatus ?? byStatus;
     return {
-      total: incidents.length,
-      open: byStatus.NEW + byStatus.ASSIGNED,
-      byStatus,
-      bySeverity,
+      total: exact?.total ?? incidents.length,
+      open: exactStatus.NEW + exactStatus.ASSIGNED,
+      byStatus: exactStatus,
+      bySeverity: exact?.bySeverity ?? bySeverity,
       topServices,
       recent,
     };
-  }, [data]);
+  }, [data, exact]);
 
   // ── Timeline: last 14 days, total incidents per day ───────────────────────
 

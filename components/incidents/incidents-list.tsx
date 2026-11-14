@@ -1,11 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 
-import { useIncidents } from "@/hooks/use-incidents";
-import type { Incident, IncidentStatus, Severity } from "@/types/incident";
+import { useIncidentPage, useIncidentStats } from "@/hooks/use-incidents";
+import type {
+  IncidentFilters,
+  IncidentStatus,
+  Severity,
+} from "@/types/incident";
 import { severityBadge, statusBadge } from "@/lib/theme/tokens";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -74,45 +78,40 @@ function timeAgo(iso: string) {
   return formatDistanceToNow(new Date(iso), { addSuffix: true });
 }
 
-const PAGE_SIZE = 20;
 const ALL = "ALL";
 
 export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
   const router = useRouter();
-  const { data, isLoading, isError } = useIncidents();
-
   const [service, setService] = useState("");
   const [severity, setSeverity] = useState<Severity | typeof ALL>(ALL);
   const [status, setStatus] = useState<IncidentStatus | typeof ALL>(ALL);
   const [environment, setEnvironment] = useState<string | typeof ALL>(ALL);
   const [page, setPage] = useState(0);
 
-  const environments = useMemo(() => {
-    if (!data) return [];
-    return [...new Set(data.content.map((i) => i.environment))].sort();
-  }, [data]);
+  // the service box filters as you type, but asks the server only after a short pause
+  const [serviceName, setServiceName] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => setServiceName(service.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [service]);
 
-  const filtered = useMemo<Incident[]>(() => {
-    if (!data) return [];
-    return data.content.filter((i) => {
-      if (severity !== ALL && i.severity !== severity) return false;
-      if (status !== ALL && i.status !== status) return false;
-      if (environment !== ALL && i.environment !== environment) return false;
-      if (
-        service &&
-        !i.serviceName.toLowerCase().includes(service.toLowerCase())
-      )
-        return false;
-      return true;
-    });
-  }, [data, severity, status, environment, service]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages - 1);
-  const pageItems = filtered.slice(
-    safePage * PAGE_SIZE,
-    safePage * PAGE_SIZE + PAGE_SIZE
+  const filters = useMemo<IncidentFilters>(
+    () => ({
+      ...(severity !== ALL && { severity }),
+      ...(status !== ALL && { status }),
+      ...(environment !== ALL && { environment }),
+      ...(serviceName && { serviceName }),
+    }),
+    [severity, status, environment, serviceName]
   );
+  const { data, isLoading, isError } = useIncidentPage(filters, page);
+  const { data: stats } = useIncidentStats();
+
+  const environments = stats?.environments ?? [];
+  const pageItems = data?.content ?? [];
+  const totalPages = Math.max(1, data?.totalPages ?? 1);
+  const safePage = Math.min(page, totalPages - 1);
+  const filtering = Object.keys(filters).length > 0;
 
   function resetPage() {
     setPage(0);
@@ -135,13 +134,9 @@ export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
         <p className="mt-1 text-sm text-muted-foreground">
           {isLoading
             ? "Loading…"
-            : `${filtered.length} incident${filtered.length !== 1 ? "s" : ""}${
-                filtered.length !== data?.content.length
-                  ? ` (filtered from ${data?.content.length})`
-                  : ""
+            : `${data?.totalElements ?? 0} incident${data?.totalElements === 1 ? "" : "s"}${
+                filtering && stats ? ` (of ${stats.total})` : ""
               }`}
-          {data?.truncated &&
-            ` · showing the latest ${data.content.length} of ${data.totalElements}`}
         </p>
       </div>
 

@@ -62,3 +62,20 @@ export interface IncidentLogsPage {
   totalPages: number;
   number: number;
 }
+
+/** Filters the incident list accepts; the server applies them. */
+export interface IncidentFilters {
+  status?: IncidentStatus;
+  severity?: Severity;
+  /** Part of the service name, case-insensitive. */
+  serviceName?: string;
+  environment?: string;
+}
+
+/** Exact counts for the whole tenant, from `GET /incidents/stats`. */
+export interface IncidentStats {
+  total: number;
+  byStatus: Record<IncidentStatus, number>;
+  bySeverity: Record<Severity, number>;
+  environments: string[];
+}
