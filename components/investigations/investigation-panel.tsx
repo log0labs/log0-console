@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StartForm } from "@/components/investigations/start-form";
+import { ResultView } from "@/components/investigations/result-view";
 import { ReviewGate } from "@/components/investigations/review-gate";
 import { Timeline } from "@/components/investigations/timeline";
 import { useInvestigationEvents } from "@/hooks/use-investigation-events";
@@ -100,7 +101,22 @@ export function InvestigationPanel({ incidentId }: { incidentId: string }) {
               canAnswer={canStart}
             />
           )}
-          <Timeline events={events} state={state} working={active} />
+          {latest?.status === "FAILED" && latest.error && (
+            <p role="alert" className="text-sm text-destructive">
+              {latest.error}
+            </p>
+          )}
+          {latest?.status === "COMPLETED" && (
+            <ResultView investigation={latest} events={events} />
+          )}
+          <details open={active} className="group">
+            <summary className="cursor-pointer text-xs text-muted-foreground">
+              Steps ({events.length} events)
+            </summary>
+            <div className="pt-2">
+              <Timeline events={events} state={state} working={active} />
+            </div>
+          </details>
         </div>
       )}
     </section>
