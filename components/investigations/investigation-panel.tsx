@@ -5,7 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StartForm } from "@/components/investigations/start-form";
-import { useInvestigations } from "@/hooks/use-investigations";
+import { Timeline } from "@/components/investigations/timeline";
+import { useInvestigationEvents } from "@/hooks/use-investigation-events";
+import {
+  useCancelInvestigation,
+  useInvestigations,
+} from "@/hooks/use-investigations";
 import { useAuthStore } from "@/store/auth";
 import { ACTIVE_STATUSES } from "@/types/investigation";
 
@@ -18,6 +23,8 @@ export function InvestigationPanel({ incidentId }: { incidentId: string }) {
 
   const latest = data?.[0];
   const active = !!latest && ACTIVE_STATUSES.includes(latest.status);
+  const { events, state } = useInvestigationEvents(latest?.id ?? null);
+  const cancel = useCancelInvestigation(latest?.id ?? "");
 
   return (
     <section className="flex flex-col gap-2">
@@ -62,11 +69,26 @@ export function InvestigationPanel({ incidentId }: { incidentId: string }) {
       )}
 
       {latest && (
-        <div className="flex items-center gap-2 rounded-lg border bg-muted/20 p-4 text-sm">
-          <Badge variant="outline">{latest.status.replace("_", " ")}</Badge>
-          <span className="text-muted-foreground">
-            {latest.question ?? "Find the root cause"}
-          </span>
+        <div className="flex flex-col gap-3 rounded-lg border bg-muted/20 p-4 text-sm">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <Badge variant="outline">{latest.status.replace("_", " ")}</Badge>
+              <span className="truncate text-muted-foreground">
+                {latest.question ?? "Find the root cause"}
+              </span>
+            </div>
+            {canStart && active && (
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={cancel.isPending}
+                onClick={() => cancel.mutate()}
+              >
+                Cancel
+              </Button>
+            )}
+          </div>
+          <Timeline events={events} state={state} working={active} />
         </div>
       )}
     </section>
