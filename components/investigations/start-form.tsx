@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useStartInvestigation } from "@/hooks/use-investigations";
 import {
   buildRequest,
@@ -21,7 +22,7 @@ interface StartFormProps {
   onCancel: () => void;
 }
 
-/** Ask for an investigation: an optional question and the sources it may use. */
+/** Ask for an investigation: an optional question and the sources it may use, as toggle chips. */
 export function StartForm({ incidentId, onStarted, onCancel }: StartFormProps) {
   const [question, setQuestion] = useState("");
   const [scope, setScope] = useState<InvestigationScope>(DEFAULT_SCOPE);
@@ -40,46 +41,38 @@ export function StartForm({ incidentId, onStarted, onCancel }: StartFormProps) {
   return (
     <form
       onSubmit={submit}
-      className="flex flex-col gap-4 rounded-lg border bg-muted/20 p-4"
+      className="flex flex-col gap-3 rounded-xl border p-3.5"
     >
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="investigation-question">
-          Question <span className="text-muted-foreground">(optional)</span>
-        </Label>
-        <textarea
-          id="investigation-question"
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          maxLength={MAX_QUESTION_LENGTH + 100}
-          rows={3}
-          placeholder="What do you want to know? Leave empty to find the root cause."
-          className="w-full resize-y rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-      </div>
+      <Textarea
+        value={question}
+        onChange={(e) => setQuestion(e.target.value)}
+        maxLength={MAX_QUESTION_LENGTH + 100}
+        rows={2}
+        aria-label="Question (optional)"
+        placeholder="Ask something specific, or leave empty to find the root cause"
+      />
 
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-xs text-muted-foreground">
-          Sources it may use
-        </legend>
+      <div
+        role="group"
+        aria-label="Sources it may use"
+        className="flex flex-wrap gap-1.5"
+      >
         {SCOPE_OPTIONS.map((option) => (
-          <label key={option.key} className="flex items-start gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={scope[option.key]}
-              onChange={(e) =>
-                setScope((s) => ({ ...s, [option.key]: e.target.checked }))
-              }
-              className="mt-0.5 accent-primary"
-            />
-            <span>
-              {option.label}
-              <span className="ml-2 text-xs text-muted-foreground">
-                {option.hint}
-              </span>
-            </span>
-          </label>
+          <Button
+            key={option.key}
+            type="button"
+            variant="chip"
+            size="xs"
+            aria-pressed={scope[option.key]}
+            title={option.hint}
+            onClick={() =>
+              setScope((s) => ({ ...s, [option.key]: !s[option.key] }))
+            }
+          >
+            {option.label}
+          </Button>
         ))}
-      </fieldset>
+      </div>
 
       {problem && (
         <p role="alert" className="text-xs text-destructive">
@@ -92,7 +85,7 @@ export function StartForm({ incidentId, onStarted, onCancel }: StartFormProps) {
           Cancel
         </Button>
         <Button type="submit" size="sm" disabled={!!problem || start.isPending}>
-          {start.isPending ? "Starting…" : "Start investigation"}
+          {start.isPending ? "Starting…" : "Start"}
         </Button>
       </div>
     </form>

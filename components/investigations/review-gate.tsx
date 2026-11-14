@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useResumeInvestigation } from "@/hooks/use-investigations";
 import {
   buildDecision,
@@ -47,12 +48,12 @@ export function ReviewGate({
 
   return (
     <div
-      className="flex flex-col gap-3 rounded-lg border border-amber-500/40 bg-amber-500/5 p-4"
+      className="flex flex-col gap-3 rounded-xl border border-severity-high/40 bg-severity-high/10 p-3.5"
       role="group"
       aria-label="Review the root cause"
     >
       <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-medium">Review needed</p>
+        <p className="text-sm font-medium text-severity-high">Your call</p>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span>Round {review.round}</span>
           {review.confidenceBand && (
@@ -67,10 +68,6 @@ export function ReviewGate({
           Suggested: {review.recommendation}
         </p>
       )}
-      <p className="text-xs text-muted-foreground">
-        Approve to let it propose a code fix, or refine to send it back with a
-        hint.
-      </p>
 
       {!canAnswer ? (
         <p className="text-xs text-muted-foreground">
@@ -81,14 +78,13 @@ export function ReviewGate({
           <Label htmlFor="review-note">
             What should it look at differently?
           </Label>
-          <textarea
+          <Textarea
             id="review-note"
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={3}
             maxLength={MAX_NOTE_LENGTH + 100}
             autoFocus
-            className="w-full resize-y rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
           {note.trim() !== "" && problem && (
             <p role="alert" className="text-xs text-destructive">
@@ -114,7 +110,7 @@ export function ReviewGate({
           </div>
         </div>
       ) : (
-        <div className="flex flex-wrap justify-end gap-2">
+        <div className="flex flex-wrap justify-end gap-2 max-sm:[&>button]:flex-1">
           <Button
             variant="ghost"
             size="sm"

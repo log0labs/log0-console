@@ -31,7 +31,7 @@ export function IncidentDrawer({ incidentId }: { incidentId: string }) {
       />
 
       {/* Panel */}
-      <aside className="fixed inset-y-0 right-0 z-50 flex w-[560px] max-w-[90vw] flex-col border-l bg-background shadow-xl">
+      <aside className="fixed inset-y-0 right-0 z-50 flex w-full flex-col border-l bg-background shadow-xl sm:w-[640px] sm:max-w-[92vw] lg:w-[720px]">
         {/* Header */}
         <div className="flex h-12 shrink-0 items-center justify-between border-b px-4">
           <span className="text-sm font-medium text-muted-foreground">

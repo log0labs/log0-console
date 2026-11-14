@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/auth";
 import { cn } from "@/lib/utils";
+import { SectionLabel } from "@/components/ui/section-label";
 
 const SETTINGS_TABS = [
   { href: "/settings/workspace", label: "Workspace" },
@@ -13,6 +14,7 @@ const SETTINGS_TABS = [
   { href: "/settings/api-keys", label: "API Keys" },
   { href: "/settings/ai", label: "AI" },
   { href: "/settings/repositories", label: "Repositories" },
+  { href: "/settings/runbooks", label: "Runbooks" },
 ];
 
 export default function SettingsLayout({
@@ -34,20 +36,18 @@ export default function SettingsLayout({
   if (!authReady || role !== "ADMIN") return null;
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full flex-col md:flex-row">
       {/* Secondary left panel */}
-      <aside className="w-50 shrink-0 border-r bg-background">
-        <div className="px-4 py-4">
-          <p className="mb-3 text-xs font-medium tracking-wider text-muted-foreground uppercase">
-            Settings
-          </p>
-          <nav className="flex flex-col gap-0.5">
+      <aside className="shrink-0 border-b bg-background md:w-50 md:border-r md:border-b-0">
+        <div className="px-4 py-3 md:py-4">
+          <SectionLabel className="mb-3 max-md:hidden">Settings</SectionLabel>
+          <nav className="flex gap-0.5 overflow-x-auto [scrollbar-width:none] md:flex-col">
             {SETTINGS_TABS.map((tab) => (
               <Link
                 key={tab.href}
                 href={tab.href}
                 className={cn(
-                  "rounded-md px-3 py-2 text-sm transition-colors",
+                  "shrink-0 rounded-md px-3 py-2 text-sm whitespace-nowrap transition-colors",
                   pathname === tab.href
                     ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
                     : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground"
@@ -61,7 +61,7 @@ export default function SettingsLayout({
       </aside>
 
       {/* Settings content */}
-      <div className="flex-1 overflow-y-auto p-6">{children}</div>
+      <div className="flex-1 overflow-y-auto p-4 md:p-6">{children}</div>
     </div>
   );
 }

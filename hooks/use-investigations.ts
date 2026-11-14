@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { aiApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
+import type { FeedbackRequest } from "@/lib/feedback";
 import type {
   CreateInvestigationRequest,
   CreateInvestigationResponse,
@@ -76,5 +77,14 @@ export function useResumeInvestigation(investigationId: string) {
     },
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["investigations"] }),
+  });
+}
+
+/** Tell the service whether a finished result helped (it never recalls "wrong" ones). */
+export function useSendFeedback(investigationId: string) {
+  return useMutation({
+    mutationFn: async (body: FeedbackRequest) => {
+      await aiApi.post(`/api/v1/investigations/${investigationId}/feedback`, body);
+    },
   });
 }

@@ -9,9 +9,9 @@ import type { StreamEvent } from "@/types/investigation";
 
 const DOT: Record<Tone, string> = {
   info: "bg-muted-foreground/60",
-  success: "bg-emerald-500",
-  warning: "bg-amber-500",
-  error: "bg-red-500",
+  success: "bg-primary",
+  warning: "bg-severity-high",
+  error: "bg-destructive",
 };
 
 const STATE_LABEL: Partial<Record<ConnectionState, string>> = {
@@ -66,7 +66,7 @@ export function Timeline({ events, state, working }: TimelineProps) {
                 </time>
               </div>
               {row.detail && (
-                <p className="text-sm break-words text-muted-foreground">
+                <p className="text-xs leading-relaxed break-words text-muted-foreground">
                   {row.detail}
                 </p>
               )}

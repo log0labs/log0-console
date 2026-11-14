@@ -27,6 +27,8 @@ export interface EvidenceItem {
   id: string;
   kind: EvidenceKind | string;
   summary: string;
+  /** Secrets or personal values hidden in this evidence before analysis. */
+  redacted: number;
   seq: number;
 }
 
@@ -69,10 +71,42 @@ export function deriveEvidence(events: StreamEvent[]): EvidenceItem[] {
       id,
       kind: text(p.kind, "log"),
       summary: text(p.summary),
+      redacted: num(p.redacted),
       seq: event.seq,
     });
   }
   return items;
+}
+
+/** What the run could not examine (a source was down, a step could not conclude), each message once. */
+export function deriveGaps(events: StreamEvent[]): string[] {
+  const gaps = new Set<string>();
+  for (const event of events) {
+    if (event.type !== "gap.recorded") continue;
+    const message = text(obj(event).message).trim();
+    if (message) gaps.add(message);
+  }
+  return [...gaps];
+}
+
+/** How many sensitive values were hidden across the whole run, and which kinds. */
+export function deriveRedaction(events: StreamEvent[]): {
+  count: number;
+  kinds: string[];
+} {
+  let count = 0;
+  const kinds = new Set<string>();
+  for (const event of events) {
+    if (event.type !== "redaction.applied") continue;
+    const p = obj(event);
+    count += num(p.count);
+    if (p.kinds && typeof p.kinds === "object") {
+      for (const kind of Object.keys(p.kinds as Record<string, unknown>)) {
+        kinds.add(kind.replaceAll("_", " "));
+      }
+    }
+  }
+  return { count, kinds: [...kinds].sort() };
 }
 
 /** The hypotheses with their latest status: an update replaces the earlier version. */

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useAuthStore } from "@/store/auth";
 import {
   Card,
@@ -9,32 +8,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { CopyButton } from "@/components/ui/copy-button";
+import { SectionLabel } from "@/components/ui/section-label";
 
 function CopyField({ label, value }: { label: string; value: string }) {
-  const [copied, setCopied] = useState(false);
-
-  function copy() {
-    navigator.clipboard.writeText(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
   return (
     <div className="flex flex-col gap-1.5">
-      <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
-        {label}
-      </p>
+      <SectionLabel>{label}</SectionLabel>
       <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2">
         <code className="flex-1 truncate font-mono text-sm">{value}</code>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-6 shrink-0 px-2 text-xs"
-          onClick={copy}
-        >
-          {copied ? "Copied!" : "Copy"}
-        </Button>
+        <CopyButton text={value} what={`${label} copied`} label={`Copy ${label}`} />
       </div>
     </div>
   );
@@ -66,9 +49,7 @@ export default function WorkspacePage() {
           <CopyField label="Tenant ID" value={tenantId ?? "-"} />
 
           <div className="flex flex-col gap-1.5">
-            <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
-              Your role
-            </p>
+            <SectionLabel>Your role</SectionLabel>
             <p className="text-sm font-medium">{role}</p>
           </div>
         </CardContent>

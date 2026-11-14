@@ -128,7 +128,7 @@ export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold">Incidents</h1>
@@ -140,6 +140,8 @@ export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
                   ? ` (filtered from ${data?.content.length})`
                   : ""
               }`}
+          {data?.truncated &&
+            ` · showing the latest ${data.content.length} of ${data.totalElements}`}
         </p>
       </div>
 
@@ -242,10 +244,12 @@ export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
               <TableHead className="w-28">Severity</TableHead>
               <TableHead className="w-36">Status</TableHead>
               <TableHead>Service</TableHead>
-              <TableHead>Environment</TableHead>
-              <TableHead className="w-28 text-right">Occurrences</TableHead>
+              <TableHead className="max-md:hidden">Environment</TableHead>
+              <TableHead className="w-28 text-right max-md:hidden">
+                Occurrences
+              </TableHead>
               <TableHead className="w-36">Last seen</TableHead>
-              <TableHead className="w-36">First seen</TableHead>
+              <TableHead className="w-36 max-lg:hidden">First seen</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -254,7 +258,16 @@ export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
               Array.from({ length: 8 }).map((_, i) => (
                 <TableRow key={i}>
                   {Array.from({ length: 7 }).map((_, j) => (
-                    <TableCell key={j}>
+                    <TableCell
+                      key={j}
+                      className={
+                        j === 3 || j === 4
+                          ? "max-md:hidden"
+                          : j === 6
+                            ? "max-lg:hidden"
+                            : undefined
+                      }
+                    >
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
                   ))}
@@ -296,16 +309,16 @@ export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
                   <TableCell className="font-medium">
                     {incident.serviceName}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-muted-foreground max-md:hidden">
                     {incident.environment}
                   </TableCell>
-                  <TableCell className="text-right font-mono text-sm">
+                  <TableCell className="text-right font-mono text-sm max-md:hidden">
                     {incident.occurrenceCount.toLocaleString()}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {timeAgo(incident.lastSeenAt)}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="text-sm text-muted-foreground max-lg:hidden">
                     {timeAgo(incident.firstSeenAt)}
                   </TableCell>
                 </TableRow>

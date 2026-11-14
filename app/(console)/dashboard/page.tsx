@@ -45,17 +45,12 @@ import {
   statusFill as STATUS_FILL,
   severityBadge as SEVERITY_CLASS,
   statusBadge as STATUS_CLASS,
+  statusLabel,
   chartAccent,
 } from "@/lib/theme/tokens";
 
 // ── Colors come from lib/theme/tokens.ts (central, theme-driven) ───────────────
 
-const STATUS_LABEL: Record<IncidentStatus, string> = {
-  NEW: "New",
-  ASSIGNED: "Assigned",
-  ACKNOWLEDGED: "Acknowledged",
-  RESOLVED: "Resolved",
-};
 
 // ── Chart configs ─────────────────────────────────────────────────────────────
 
@@ -234,7 +229,7 @@ export default function DashboardPage() {
     if (!stats)
       return [{ name: "No data", value: 1, fill: "hsl(var(--muted))" }];
     const slices = (Object.keys(STATUS_FILL) as IncidentStatus[]).map((s) => ({
-      name: STATUS_LABEL[s],
+      name: statusLabel[s],
       value: stats.byStatus[s],
       fill: STATUS_FILL[s],
     }));
@@ -420,7 +415,7 @@ export default function DashboardPage() {
                       style={{ background: STATUS_FILL[s] }}
                     />
                     <span>
-                      {STATUS_LABEL[s]}:{" "}
+                      {statusLabel[s]}:{" "}
                       <span className="font-medium text-foreground">
                         {stats?.byStatus[s] ?? 0}
                       </span>
@@ -591,7 +586,7 @@ export default function DashboardPage() {
                         variant="outline"
                         className={`text-xs ${STATUS_CLASS[inc.status]}`}
                       >
-                        {STATUS_LABEL[inc.status]}
+                        {statusLabel[inc.status]}
                       </Badge>
                     </TableCell>
                     <TableCell className="font-medium">

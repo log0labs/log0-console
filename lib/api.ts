@@ -114,3 +114,16 @@ export const incidentsApi = createAuthedApi();
  * handling as the incidents client; the console proxy routes these paths to AI_API_URL.
  */
 export const aiApi = createAuthedApi();
+
+/**
+ * Log out: revoke the refresh token on the server first (best effort, so a network error never traps the
+ * user in a session), then clear the local session and go to the login page.
+ */
+export async function signOut(): Promise<void> {
+  try {
+    await authApi.post("/api/v1/auth/logout");
+  } catch {
+    /* the local session is cleared either way */
+  }
+  await endSession();
+}
