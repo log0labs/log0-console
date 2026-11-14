@@ -20,28 +20,47 @@ authApi.interceptors.request.use((config) => {
   return config;
 });
 
-// Queue of requests waiting while a token refresh is in flight. It is shared by every client
-// built with createAuthedApi: there is one session, so one refresh serves them all.
-let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (token: string) => void;
-  reject: (err: unknown) => void;
-}> = [];
+// One refresh at a time. Refresh tokens rotate, so two refreshes at once would make the second one
+// fail and log the user out: every caller (an axios 401, the event-stream reader) shares the same
+// in-flight promise instead.
+let refreshing: Promise<string> | null = null;
 
-function processQueue(error: unknown, token: string | null = null) {
-  failedQueue.forEach(({ resolve, reject }) => {
-    if (error) reject(error);
-    else resolve(token!);
+/** Get a fresh access token from the refresh cookie and store it. Concurrent callers share one request. */
+export function refreshAccessToken(): Promise<string> {
+  refreshing ??= (async () => {
+    const res = await fetch("/api/auth/refresh", { method: "POST" });
+    if (!res.ok) throw new Error("Refresh failed");
+
+    const { accessToken } = (await res.json()) as { accessToken: string };
+    const { userId, tenantId, role } = decodeJwt(accessToken);
+    useAuthStore.getState().setAuth({ accessToken, userId, tenantId, role });
+    return accessToken;
+  })().finally(() => {
+    refreshing = null;
   });
-  failedQueue = [];
+  return refreshing;
+}
+
+let endingSession = false;
+
+/** The session cannot be recovered: clear it and send the user to the login page (once, however many calls failed). */
+export async function endSession(): Promise<void> {
+  if (endingSession) return;
+  endingSession = true;
+  try {
+    useAuthStore.getState().clearAuth();
+    await fetch("/api/auth/cookie", { method: "DELETE" });
+    window.location.href = "/login";
+  } finally {
+    endingSession = false;
+  }
 }
 
 /**
  * An axios client for a backend that needs the access token.
  *
  * It adds `Authorization: Bearer <token>` to every request, and on a 401 refreshes the token
- * once and retries. Concurrent 401s wait for the same refresh. If the refresh fails it clears
- * the auth state and sends the user to the login page.
+ * once and retries. Concurrent 401s share one refresh. If the refresh fails the session ends.
  */
 export function createAuthedApi(): AxiosInstance {
   const instance = axios.create({
@@ -64,42 +83,16 @@ export function createAuthedApi(): AxiosInstance {
       if (error.response?.status !== 401 || original._retry) {
         return Promise.reject(error);
       }
-
-      if (isRefreshing) {
-        return new Promise<string>((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            original.headers.Authorization = `Bearer ${token}`;
-            return instance(original);
-          })
-          .catch((err) => Promise.reject(err));
-      }
-
       original._retry = true;
-      isRefreshing = true;
 
       try {
-        const res = await fetch("/api/auth/refresh", { method: "POST" });
-        if (!res.ok) throw new Error("Refresh failed");
-
-        const { accessToken } = await res.json();
-        const { userId, tenantId, role } = decodeJwt(accessToken);
-        useAuthStore
-          .getState()
-          .setAuth({ accessToken, userId, tenantId, role });
+        const accessToken = await refreshAccessToken();
         instance.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
         original.headers.Authorization = `Bearer ${accessToken}`;
-        processQueue(null, accessToken);
         return instance(original);
       } catch (err) {
-        processQueue(err);
-        useAuthStore.getState().clearAuth();
-        await fetch("/api/auth/cookie", { method: "DELETE" });
-        window.location.href = "/login";
+        await endSession();
         return Promise.reject(err);
-      } finally {
-        isRefreshing = false;
       }
     }
   );
