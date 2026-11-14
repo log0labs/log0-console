@@ -5,12 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StartForm } from "@/components/investigations/start-form";
+import { ReviewGate } from "@/components/investigations/review-gate";
 import { Timeline } from "@/components/investigations/timeline";
 import { useInvestigationEvents } from "@/hooks/use-investigation-events";
 import {
   useCancelInvestigation,
   useInvestigations,
 } from "@/hooks/use-investigations";
+import { pendingReview } from "@/lib/review";
 import { useAuthStore } from "@/store/auth";
 import { ACTIVE_STATUSES } from "@/types/investigation";
 
@@ -25,6 +27,8 @@ export function InvestigationPanel({ incidentId }: { incidentId: string }) {
   const active = !!latest && ACTIVE_STATUSES.includes(latest.status);
   const { events, state } = useInvestigationEvents(latest?.id ?? null);
   const cancel = useCancelInvestigation(latest?.id ?? "");
+  const review =
+    latest?.status === "AWAITING_REVIEW" ? pendingReview(events) : null;
 
   return (
     <section className="flex flex-col gap-2">
@@ -88,6 +92,14 @@ export function InvestigationPanel({ incidentId }: { incidentId: string }) {
               </Button>
             )}
           </div>
+          {latest && review && (
+            <ReviewGate
+              key={review.seq}
+              investigationId={latest.id}
+              review={review}
+              canAnswer={canStart}
+            />
+          )}
           <Timeline events={events} state={state} working={active} />
         </div>
       )}
