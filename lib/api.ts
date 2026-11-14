@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type AxiosInstance } from "axios";
 import { useAuthStore } from "@/store/auth";
 import { decodeJwt } from "@/lib/jwt";
 
@@ -20,26 +20,8 @@ authApi.interceptors.request.use((config) => {
   return config;
 });
 
-/**
- * Incidents Service (port 8087)
- *
- * All incident-related operations: list, detail, state transitions, related log events, etc.
- * Has a 401-retry interceptor that attempts to refresh the token once on 401 responses.
- * If refresh fails, it clears auth state and redirects to login.
- */
-export const incidentsApi = axios.create({
-  headers: { "Content-Type": "application/json" },
-});
-
-incidentsApi.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().accessToken;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Queue of requests waiting while a token refresh is in flight
+// Queue of requests waiting while a token refresh is in flight. It is shared by every client
+// built with createAuthedApi: there is one session, so one refresh serves them all.
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (token: string) => void;
@@ -54,48 +36,88 @@ function processQueue(error: unknown, token: string | null = null) {
   failedQueue = [];
 }
 
-incidentsApi.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const original = error.config;
+/**
+ * An axios client for a backend that needs the access token.
+ *
+ * It adds `Authorization: Bearer <token>` to every request, and on a 401 refreshes the token
+ * once and retries. Concurrent 401s wait for the same refresh. If the refresh fails it clears
+ * the auth state and sends the user to the login page.
+ */
+export function createAuthedApi(): AxiosInstance {
+  const instance = axios.create({
+    headers: { "Content-Type": "application/json" },
+  });
 
-    if (error.response?.status !== 401 || original._retry) {
-      return Promise.reject(error);
+  instance.interceptors.request.use((config) => {
+    const token = useAuthStore.getState().accessToken;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
+  });
 
-    if (isRefreshing) {
-      return new Promise<string>((resolve, reject) => {
-        failedQueue.push({ resolve, reject });
-      })
-        .then((token) => {
-          original.headers.Authorization = `Bearer ${token}`;
-          return incidentsApi(original);
+  instance.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      const original = error.config;
+
+      if (error.response?.status !== 401 || original._retry) {
+        return Promise.reject(error);
+      }
+
+      if (isRefreshing) {
+        return new Promise<string>((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
         })
-        .catch((err) => Promise.reject(err));
+          .then((token) => {
+            original.headers.Authorization = `Bearer ${token}`;
+            return instance(original);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      original._retry = true;
+      isRefreshing = true;
+
+      try {
+        const res = await fetch("/api/auth/refresh", { method: "POST" });
+        if (!res.ok) throw new Error("Refresh failed");
+
+        const { accessToken } = await res.json();
+        const { userId, tenantId, role } = decodeJwt(accessToken);
+        useAuthStore
+          .getState()
+          .setAuth({ accessToken, userId, tenantId, role });
+        instance.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+        original.headers.Authorization = `Bearer ${accessToken}`;
+        processQueue(null, accessToken);
+        return instance(original);
+      } catch (err) {
+        processQueue(err);
+        useAuthStore.getState().clearAuth();
+        await fetch("/api/auth/cookie", { method: "DELETE" });
+        window.location.href = "/login";
+        return Promise.reject(err);
+      } finally {
+        isRefreshing = false;
+      }
     }
+  );
 
-    original._retry = true;
-    isRefreshing = true;
+  return instance;
+}
 
-    try {
-      const res = await fetch("/api/auth/refresh", { method: "POST" });
-      if (!res.ok) throw new Error("Refresh failed");
+/**
+ * Incidents Service (port 8087)
+ *
+ * All incident-related operations: list, detail, state transitions, related log events, etc.
+ */
+export const incidentsApi = createAuthedApi();
 
-      const { accessToken } = await res.json();
-      const { userId, tenantId, role } = decodeJwt(accessToken);
-      useAuthStore.getState().setAuth({ accessToken, userId, tenantId, role });
-      incidentsApi.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
-      original.headers.Authorization = `Bearer ${accessToken}`;
-      processQueue(null, accessToken);
-      return incidentsApi(original);
-    } catch (err) {
-      processQueue(err);
-      useAuthStore.getState().clearAuth();
-      await fetch("/api/auth/cookie", { method: "DELETE" });
-      window.location.href = "/login";
-      return Promise.reject(err);
-    } finally {
-      isRefreshing = false;
-    }
-  }
-);
+/**
+ * AI Service (port 8085)
+ *
+ * AI investigations of incidents, the repositories and LLM settings they use. Same token
+ * handling as the incidents client; the console proxy routes these paths to AI_API_URL.
+ */
+export const aiApi = createAuthedApi();
