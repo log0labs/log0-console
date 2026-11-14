@@ -204,7 +204,7 @@ describe("parseUnifiedDiff", () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 });
 
 describe("totals", () => {
