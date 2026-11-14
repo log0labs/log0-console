@@ -10,6 +10,7 @@ import { useIncidentLogs } from "@/hooks/use-incident-logs";
 import { useUsers } from "@/hooks/use-users";
 import { incidentsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
+import { AiSummary } from "@/components/incidents/ai-summary";
 import { InvestigationPanel } from "@/components/investigations/investigation-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -312,24 +313,7 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
         />
       )}
 
-      {/* AI Summary */}
-      <div className="flex flex-col gap-2">
-        <SectionLabel>AI Summary</SectionLabel>
-        {incident.aiSummary == null ? (
-          <div className="flex flex-col gap-2 rounded-lg border bg-muted/20 p-4">
-            <Skeleton className="h-3.5 w-full" />
-            <Skeleton className="h-3.5 w-5/6" />
-            <Skeleton className="h-3.5 w-4/6" />
-            <p className="mt-1 text-xs text-muted-foreground">
-              Generating summary…
-            </p>
-          </div>
-        ) : (
-          <p className="rounded-lg border bg-muted/20 p-4 text-sm leading-relaxed">
-            {incident.aiSummary}
-          </p>
-        )}
-      </div>
+      <AiSummary incident={incident} />
 
       <InvestigationPanel incidentId={incidentId} />
 

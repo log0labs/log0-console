@@ -16,8 +16,8 @@ export function useIncident(id: string) {
       return data;
     },
     enabled: !!tenantId && !!id,
-    // Keep polling every 3 s until aiSummary is populated
+    // Poll only while a summary is actually being generated; a failed one stops polling.
     refetchInterval: (query) =>
-      query.state.data?.aiSummary == null ? 3_000 : false,
+      query.state.data?.aiSummaryStatus === "PENDING" ? 3_000 : false,
   });
 }

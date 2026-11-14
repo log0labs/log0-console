@@ -15,6 +15,8 @@ export interface Incident {
   resolvedAt: string | null;
   topMessages: string[];
   aiSummary: string | null;
+  /** READY (text), PENDING (a request is in flight) or UNAVAILABLE (failed or never ran). */
+  aiSummaryStatus: "READY" | "PENDING" | "UNAVAILABLE";
   createdAt: string;
   updatedAt: string;
 }
