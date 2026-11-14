@@ -156,6 +156,19 @@ export function buildTimeline(events: StreamEvent[]): TimelineRow[] {
           text(p.summary)
         );
         break;
+      case "redaction.applied": {
+        const kinds =
+          p.kinds && typeof p.kinds === "object"
+            ? Object.keys(p.kinds as Record<string, unknown>).sort()
+            : [];
+        row(
+          event,
+          "info",
+          "Sensitive values hidden before analysis",
+          `${plural(num(p.count), "value")}${kinds.length ? ` (${kinds.join(", ").replaceAll("_", " ")})` : ""}`
+        );
+        break;
+      }
       case "gap.recorded":
         row(event, "warning", "Gap", text(p.message));
         break;

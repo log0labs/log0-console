@@ -56,6 +56,22 @@ describe("buildTimeline", () => {
     });
   });
 
+  it("says when sensitive values were hidden, and what kinds, never the values", () => {
+    const [row] = buildTimeline([
+      ev("redaction.applied", {
+        count: 3,
+        kinds: { github_token: 1, email: 2 },
+      }),
+    ]);
+    expect(row).toMatchObject({
+      tone: "info",
+      title: "Sensitive values hidden before analysis",
+      detail: "3 values (email, github token)",
+    });
+    const [odd] = buildTimeline([ev("redaction.applied", { count: 1 })]);
+    expect(odd.detail).toBe("1 value");
+  });
+
   it("keeps rows in event order and keys them by seq", () => {
     const rows = buildTimeline([
       ev("gap.recorded", { message: "a" }),

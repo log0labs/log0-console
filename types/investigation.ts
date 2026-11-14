@@ -137,7 +137,14 @@ export interface EventPayloads {
     gather: string[];
     hypotheses: string[];
   };
-  "evidence.added": { id: string; kind: EvidenceKind; summary: string };
+  "evidence.added": {
+    id: string;
+    kind: EvidenceKind;
+    summary: string;
+    /** How many secrets or personal values were hidden in this evidence before analysis. */
+    redacted?: number;
+  };
+  "redaction.applied": { count: number; kinds: Record<string, number> };
   "gap.recorded": { message: string };
   "hypothesis.proposed": HypothesisPayload;
   "hypothesis.updated": HypothesisPayload;
