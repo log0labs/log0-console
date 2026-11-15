@@ -320,6 +320,15 @@ export function buildTimeline(events: StreamEvent[]): TimelineRow[] {
         );
         break;
       }
+      case "pr.merged":
+        row(event, "success", "Pull request merged");
+        break;
+      case "pr.closed":
+        row(event, "warning", "Pull request closed without merging");
+        break;
+      case "pr.open":
+        row(event, "info", "Pull request reopened");
+        break;
       case "pr.opened":
         row(event, "success", "Draft pull request opened", `#${num(p.number)}`);
         break;

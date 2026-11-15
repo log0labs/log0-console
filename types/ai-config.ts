@@ -83,3 +83,22 @@ export interface LinkInstallationInput {
   installationId: number;
   state: string;
 }
+
+export interface PrPolicyInput {
+  onlyOnGreen: boolean;
+  maxFiles: number | null;
+  maxChangedLines: number | null;
+  maxPerRepositoryPerHour: number | null;
+  maxPerTenantPerHour: number | null;
+}
+
+/** The workspace's pull request rules, and the server's limits they can only tighten. */
+export interface PrPolicy extends PrPolicyInput {
+  server: {
+    maxFiles: number;
+    maxChangedLines: number;
+    maxPerRepositoryPerHour: number;
+    maxPerTenantPerHour: number;
+  };
+  serverOnlyOnGreen: boolean;
+}
