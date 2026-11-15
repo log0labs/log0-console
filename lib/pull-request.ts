@@ -63,6 +63,8 @@ export interface PullRequestProgress {
   commit: string | null;
   tests: { outcome: CiOutcome; checks: { name: string; conclusion: string }[] } | null;
   pr: { number: number; url: string } | null;
+  /** What happened to the pull request on GitHub after it was opened (a human merged or closed it). */
+  outcome: "open" | "merged" | "closed";
 }
 
 /** Where the pull request is, from the events after its approval was asked for. Null when it never came up. */
@@ -76,6 +78,7 @@ export function pullRequestProgress(
     commit: null,
     tests: null,
     pr: null,
+    outcome: "open",
   };
   for (const event of events) {
     const p = obj(event);
@@ -113,6 +116,15 @@ export function pullRequestProgress(
         }
         break;
       }
+      case "pr.merged":
+        progress.outcome = "merged";
+        break;
+      case "pr.closed":
+        progress.outcome = "closed";
+        break;
+      case "pr.open": // reopened
+        progress.outcome = "open";
+        break;
       case "pr.opened":
         progress.phase = "opened";
         progress.pr = { number: num(p.number), url: str(p.url) };

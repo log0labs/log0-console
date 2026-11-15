@@ -54,7 +54,13 @@ export function PullRequestCard({
           ) : (
             <span className="font-medium">Draft pull request #{pr.number}</span>
           )}
-          <span className="text-muted-foreground"> is ready for review.</span>
+          <span className="text-muted-foreground">
+            {progress.outcome === "merged"
+              ? " was merged."
+              : progress.outcome === "closed"
+                ? " was closed without merging."
+                : " is ready for review."}
+          </span>
         </p>
       ) : (
         <p className="text-sm text-muted-foreground">

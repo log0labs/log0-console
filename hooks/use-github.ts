@@ -5,6 +5,8 @@ import type {
   GithubAppStatus,
   GithubInstallation,
   LinkInstallationInput,
+  PrPolicy,
+  PrPolicyInput,
   Repository,
 } from "@/types/ai-config";
 
@@ -12,6 +14,7 @@ const KEYS = {
   app: ["github", "app"] as const,
   installations: ["github", "installations"] as const,
   repositories: ["repositories"] as const,
+  policy: ["github", "policy"] as const,
 };
 
 function useEnabled() {
@@ -82,5 +85,33 @@ export function useSetRepositoryWrites() {
       ).data,
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: KEYS.repositories }),
+  });
+}
+
+export function usePrPolicy() {
+  const enabled = useEnabled();
+  return useQuery<PrPolicy>({
+    queryKey: KEYS.policy,
+    queryFn: async () => (await aiApi.get<PrPolicy>("/api/v1/github/policy")).data,
+    enabled,
+  });
+}
+
+export function useSavePrPolicy() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: PrPolicyInput) =>
+      (await aiApi.put<PrPolicy>("/api/v1/github/policy", body)).data,
+    onSuccess: (data) => queryClient.setQueryData(KEYS.policy, data),
+  });
+}
+
+export function useResetPrPolicy() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      await aiApi.delete("/api/v1/github/policy");
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: KEYS.policy }),
   });
 }

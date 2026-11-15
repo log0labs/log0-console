@@ -24,9 +24,20 @@ import {
   useGithubApp,
   useInstallations,
   useLinkInstallation,
+  usePrPolicy,
+  useResetPrPolicy,
+  useSavePrPolicy,
   useSetRepositoryWrites,
   useUnlinkInstallation,
 } from "@/hooks/use-github";
+import {
+  buildRules,
+  formFromPolicy,
+  RULE_FIELDS,
+  sameRules,
+  validateRules,
+  type RulesForm,
+} from "@/lib/pr-rules";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmButton } from "@/components/ui/confirm-button";
@@ -137,7 +148,7 @@ function RepositoryRow({
   const writes = useSetRepositoryWrites();
 
   return (
-    <li className="flex items-center justify-between gap-2 py-2">
+    <li className="flex items-center justify-between gap-2 py-2 max-sm:flex-col max-sm:items-start">
       <div className="min-w-0">
         <p className="truncate font-mono text-sm">
           {repo.owner}/{repo.name}
@@ -307,6 +318,105 @@ function GithubAppCard() {
   );
 }
 
+function PrRulesCard() {
+  const policy = usePrPolicy();
+  const save = useSavePrPolicy();
+  const reset = useResetPrPolicy();
+  const [draft, setDraft] = useState<RulesForm | null>(null);
+
+  if (policy.isLoading) return <Skeleton className="h-24 w-full" />;
+  if (!policy.data) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Could not load the pull request rules.
+      </p>
+    );
+  }
+  const saved = formFromPolicy(policy.data);
+  const form = draft ?? saved;
+  const problem = validateRules(form, policy.data);
+  const dirty = !sameRules(form, saved);
+  const locked = policy.data.serverOnlyOnGreen;
+
+  return (
+    <div className="flex flex-col gap-4">
+      <label className="flex items-start gap-2 text-sm">
+        <input
+          type="checkbox"
+          className="mt-1"
+          checked={form.onlyOnGreen}
+          disabled={locked}
+          onChange={(e) => setDraft({ ...form, onlyOnGreen: e.target.checked })}
+        />
+        <span>
+          Only open a pull request when the checks pass
+          {locked && (
+            <span className="text-muted-foreground"> (required by the server)</span>
+          )}
+        </span>
+      </label>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {RULE_FIELDS.map(({ key, label }) => (
+          <div key={key} className="flex flex-col gap-1.5">
+            <Label htmlFor={`rule-${key}`}>{label}</Label>
+            <Input
+              id={`rule-${key}`}
+              inputMode="numeric"
+              value={form.values[key]}
+              placeholder={`${policy.data.server[key]} (server limit)`}
+              onChange={(e) =>
+                setDraft({ ...form, values: { ...form.values, [key]: e.target.value } })
+              }
+            />
+          </div>
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        You can make these stricter than the server&apos;s limits, never looser.
+        Files such as workflows, lock files and keys are never included.
+      </p>
+      {problem && (
+        <p role="alert" className="text-xs text-destructive">
+          {problem}
+        </p>
+      )}
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={reset.isPending}
+          onClick={() =>
+            reset.mutate(undefined, {
+              onSuccess: () => {
+                setDraft(null);
+                toast.success("Back to the server's rules");
+              },
+              onError: (e) => toast.error(apiErrorMessage(e, "Could not reset")),
+            })
+          }
+        >
+          Reset
+        </Button>
+        <Button
+          size="sm"
+          disabled={!dirty || !!problem || save.isPending}
+          onClick={() =>
+            save.mutate(buildRules(form), {
+              onSuccess: () => {
+                setDraft(null);
+                toast.success("Rules saved");
+              },
+              onError: (e) => toast.error(apiErrorMessage(e, "Could not save the rules")),
+            })
+          }
+        >
+          {save.isPending ? "Saving…" : "Save"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function MapServiceForm({ repos }: { repos: Repository[] }) {
   const [serviceName, setServiceName] = useState("");
   const [repositoryId, setRepositoryId] = useState(repos[0]?.id ?? "");
@@ -461,6 +571,18 @@ export default function RepositoriesPage() {
         </CardHeader>
         <CardContent>
           <GithubAppCard />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Pull request rules</CardTitle>
+          <CardDescription>
+            How much log0 may change in one pull request, and how often.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PrRulesCard />
         </CardContent>
       </Card>
 

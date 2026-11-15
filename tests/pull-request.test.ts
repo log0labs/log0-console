@@ -76,6 +76,7 @@ describe("pullRequestProgress", () => {
       ev("pr.opened", { number: 7, url: "https://github.com/acme/shop/pull/7" }),
     ];
     expect(pullRequestProgress(done)).toEqual({
+      outcome: "open",
       phase: "opened",
       branch: "log0/fix-a-b",
       commit: "b7d2e9f",
@@ -157,5 +158,31 @@ describe("prDecisionErrorMessage", () => {
     expect(prDecisionErrorMessage(status(403))).toMatch(/role/);
     expect(prDecisionErrorMessage(status(503))).toMatch(/Try again/);
     expect(prDecisionErrorMessage(new Error("x"))).toMatch(/Could not send/);
+  });
+});
+
+describe("what a human did with the pull request", () => {
+  const opened = () => [
+    requested(),
+    ev("pr.decided", { action: "approve" }),
+    ev("pr.opened", { number: 7, url: "https://github.com/acme/shop/pull/7" }),
+  ];
+
+  it("shows merged, closed and reopened", () => {
+    expect(pullRequestProgress(opened())?.outcome).toBe("open");
+    expect(pullRequestProgress([...opened(), ev("pr.merged", { number: 7 })])?.outcome).toBe("merged");
+    expect(pullRequestProgress([...opened(), ev("pr.closed", { number: 7 })])?.outcome).toBe("closed");
+    expect(
+      pullRequestProgress([...opened(), ev("pr.closed", { number: 7 }), ev("pr.open", { number: 7 })])?.outcome
+    ).toBe("open");
+  });
+
+  it("describes them in the timeline", () => {
+    const rows = buildTimeline([ev("pr.merged"), ev("pr.closed"), ev("pr.open")]);
+    expect(rows.map((r) => r.title)).toEqual([
+      "Pull request merged",
+      "Pull request closed without merging",
+      "Pull request reopened",
+    ]);
   });
 });
