@@ -292,6 +292,37 @@ export function buildTimeline(events: StreamEvent[]): TimelineRow[] {
           `${plural(list(p.files).length, "file")}, ${num(p.bytes)} bytes`
         );
         break;
+      case "pr.approval_requested":
+        row(event, "warning", "Waiting for your approval to open a draft pull request", text(p.repository));
+        break;
+      case "pr.decided":
+        row(event, text(p.action) === "approve" ? "info" : "warning", text(p.action) === "approve" ? "Pull request approved" : "Pull request declined");
+        break;
+      case "branch.created":
+        row(event, "info", "Branch created", text(p.name));
+        break;
+      case "commit.created":
+        row(event, "info", "Change committed", text(p.sha).slice(0, 7));
+        break;
+      case "tests.completed": {
+        const outcome = text(p.outcome);
+        row(
+          event,
+          outcome === "passed" ? "success" : outcome === "failed" ? "error" : "warning",
+          outcome === "passed"
+            ? "Checks passed"
+            : outcome === "failed"
+              ? "Checks failed"
+              : outcome === "timeout"
+                ? "Checks still running"
+                : "No checks on the repository",
+          plural(list(p.checks).length, "check")
+        );
+        break;
+      }
+      case "pr.opened":
+        row(event, "success", "Draft pull request opened", `#${num(p.number)}`);
+        break;
       case "investigation.failed":
         row(event, "error", "Failed", text(p.error));
         break;

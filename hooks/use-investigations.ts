@@ -7,6 +7,7 @@ import type {
   CreateInvestigationResponse,
   Investigation,
   LatestInvestigation,
+  PrAction,
   ResumeInvestigationRequest,
 } from "@/types/investigation";
 
@@ -74,6 +75,21 @@ export function useResumeInvestigation(investigationId: string) {
       await aiApi.post(
         `/api/v1/investigations/${investigationId}/resume`,
         body
+      );
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["investigations"] }),
+  });
+}
+
+/** Answer the draft pull request approval: open it, or not. */
+export function usePrDecision(investigationId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (action: PrAction) => {
+      await aiApi.post(
+        `/api/v1/investigations/${investigationId}/pr/${action === "approve" ? "approve" : "decline"}`
       );
     },
     onSuccess: () =>

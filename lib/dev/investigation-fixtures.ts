@@ -227,6 +227,56 @@ export function scenarios(): Record<string, Scenario> {
     completedAt: new Date(T0 + 71000).toISOString(),
   });
 
+  const prFiles = [
+    {
+      path: "inventory-api/src/lookup.js",
+      operation: "modify",
+      additions: 1,
+      deletions: 1,
+    },
+    {
+      path: "inventory-api/test/lookup.test.js",
+      operation: "add",
+      additions: 4,
+      deletions: 0,
+    },
+  ];
+  const approval = ev("pr.approval_requested", {
+    repository: "acme/inventory",
+    branch: "log0/fix-95b5977c-4773fcad",
+    defaultBranch: "main",
+    baseSha: "a91c3e5",
+    files: prFiles,
+    rootCause: "A recent commit removed the lower-casing of SKUs.",
+    confidenceBand: "high",
+  });
+  const decided = (action: string) => ev("pr.decided", { action, decidedBy: "u1" });
+  const publishing = [
+    decided("approve"),
+    ev("branch.created", { name: "log0/fix-95b5977c-4773fcad", baseSha: "a91c3e5" }),
+    ev("commit.created", { sha: "b7d2e9f4c1a8" }),
+  ];
+  const checks = [
+    { name: "ci / build", conclusion: "success" },
+    { name: "ci / test", conclusion: "success" },
+  ];
+  const prStart = completedEvents.slice(0, -1);
+  const prAwaitingEvents = [...prStart, approval];
+  const prOpenedEvents = [
+    ...prStart,
+    approval,
+    ...publishing,
+    ev("tests.completed", { outcome: "passed", checks }),
+    ev("pr.opened", {
+      number: 42,
+      url: "https://github.com/acme/inventory/pull/42",
+      branch: "log0/fix-95b5977c-4773fcad",
+      draft: true,
+    }),
+    ev("investigation.completed"),
+  ];
+  const prDeclinedEvents = [...prStart, approval, decided("decline"), ev("investigation.completed")];
+
   seq = 0;
   const runningEvents = early().slice(0, 7);
   seq = 0;
@@ -254,6 +304,9 @@ export function scenarios(): Record<string, Scenario> {
   return {
     completed: { run: completed, events: completedEvents },
     running: { run: base("RUNNING"), events: runningEvents },
+    "pr approval": { run: { ...completed, status: "AWAITING_PR_APPROVAL" }, events: prAwaitingEvents },
+    "pr opened": { run: completed, events: prOpenedEvents },
+    "pr declined": { run: completed, events: prDeclinedEvents },
     review: {
       run: base("AWAITING_REVIEW"),
       events: reviewEvents,

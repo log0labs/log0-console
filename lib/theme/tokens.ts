@@ -104,6 +104,8 @@ export const investigationStatusLabel: Record<InvestigationStatus, string> = {
   QUEUED: "Queued",
   RUNNING: "Running",
   AWAITING_REVIEW: "Needs review",
+  AWAITING_PR_APPROVAL: "Needs approval",
+  PUBLISHING: "Opening PR",
   COMPLETED: "Done",
   FAILED: "Failed",
   CANCELLED: "Stopped",
@@ -114,6 +116,9 @@ export const investigationStatusBadge: Record<InvestigationStatus, string> = {
   RUNNING: "bg-primary/15 text-primary border-primary/30",
   AWAITING_REVIEW:
     "bg-severity-high/15 text-severity-high border-severity-high/30",
+  AWAITING_PR_APPROVAL:
+    "bg-severity-high/15 text-severity-high border-severity-high/30",
+  PUBLISHING: "bg-primary/15 text-primary border-primary/30",
   COMPLETED:
     "bg-status-resolved/15 text-status-resolved border-status-resolved/30",
   FAILED: "bg-destructive/10 text-destructive border-destructive/30",

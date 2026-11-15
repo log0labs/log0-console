@@ -13,7 +13,8 @@ export type StageId =
   | "hypotheses"
   | "cause"
   | "review"
-  | "fix";
+  | "fix"
+  | "pr";
 
 export type StageState =
   | "done"
@@ -39,6 +40,7 @@ const ORDER: { id: StageId; label: string }[] = [
   { id: "cause", label: "Cause" },
   { id: "review", label: "Review" },
   { id: "fix", label: "Fix" },
+  { id: "pr", label: "PR" },
 ];
 
 const STAGE_OF: Record<string, StageId> = {
@@ -55,6 +57,12 @@ const STAGE_OF: Record<string, StageId> = {
   "changes.proposed": "fix",
   "changes.validated": "fix",
   "diff.generated": "fix",
+  "pr.approval_requested": "pr",
+  "pr.decided": "pr",
+  "branch.created": "pr",
+  "commit.created": "pr",
+  "tests.completed": "pr",
+  "pr.opened": "pr",
 };
 
 type Loose = Record<string, unknown>;
@@ -81,6 +89,16 @@ export function isWaitingForReview(events: StreamEvent[]): boolean {
   for (const event of events) {
     if (event.type === "review.requested") waiting = true;
     else if (event.type === "review.decided") waiting = false;
+  }
+  return waiting && runEnd(events) === null;
+}
+
+/** True when the run stopped at the pull request approval that nobody has answered yet. */
+export function isWaitingForPrApproval(events: StreamEvent[]): boolean {
+  let waiting = false;
+  for (const event of events) {
+    if (event.type === "pr.approval_requested") waiting = true;
+    else if (event.type === "pr.decided") waiting = false;
   }
   return waiting && runEnd(events) === null;
 }
@@ -112,9 +130,12 @@ export function deriveStages(events: StreamEvent[]): Stage[] {
     }
   }
 
-  const waiting = isWaitingForReview(events);
-  // the review stage only exists for runs that had one
-  const stages = ORDER.filter((s) => s.id !== "review" || seen.has("review"));
+  const waitingReview = isWaitingForReview(events);
+  const waitingPr = isWaitingForPrApproval(events);
+  // the review and pull request stages only exist for runs that had one
+  const stages = ORDER.filter(
+    (s) => (s.id !== "review" && s.id !== "pr") || seen.has(s.id)
+  );
 
   return stages.map(({ id, label }) => {
     const index = ORDER.findIndex((s) => s.id === id);
@@ -127,7 +148,7 @@ export function deriveStages(events: StreamEvent[]): Stage[] {
           ? "failed"
           : end === "completed"
             ? "done"
-            : waiting && id === "review"
+            : (waitingReview && id === "review") || (waitingPr && id === "pr")
               ? "waiting"
               : "active";
     } else {

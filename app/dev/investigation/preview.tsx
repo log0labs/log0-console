@@ -3,9 +3,11 @@
 import { useMemo, useState } from "react";
 
 import { InvestigationView } from "@/components/investigations/investigation-view";
+import { PrGate } from "@/components/investigations/pr-gate";
 import { ReviewGate } from "@/components/investigations/review-gate";
 import { Button } from "@/components/ui/button";
 import { scenarios } from "@/lib/dev/investigation-fixtures";
+import { pendingPrApproval } from "@/lib/pull-request";
 import { pendingReview } from "@/lib/review";
 
 export function InvestigationPreview() {
@@ -13,6 +15,7 @@ export function InvestigationPreview() {
   const [key, setKey] = useState("completed");
   const { run, events } = all[key];
   const review = pendingReview(events);
+  const prRequest = pendingPrApproval(events);
 
   return (
     <div className="mx-auto flex max-w-[640px] flex-col gap-4 p-4">
@@ -36,8 +39,16 @@ export function InvestigationPreview() {
           events={events}
           state="live"
           gate={
-            review && (
+            review ? (
               <ReviewGate investigationId={run.id} review={review} canAnswer />
+            ) : (
+              prRequest && (
+                <PrGate
+                  investigationId={run.id}
+                  request={prRequest}
+                  canAnswer
+                />
+              )
             )
           }
         />

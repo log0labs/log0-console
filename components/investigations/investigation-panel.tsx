@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/ui/section-label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InvestigationView } from "@/components/investigations/investigation-view";
+import { PrGate } from "@/components/investigations/pr-gate";
 import { ReviewGate } from "@/components/investigations/review-gate";
 import { StartForm } from "@/components/investigations/start-form";
 import { useInvestigationEvents } from "@/hooks/use-investigation-events";
@@ -17,6 +18,7 @@ import {
   useCancelInvestigation,
   useInvestigations,
 } from "@/hooks/use-investigations";
+import { pendingPrApproval } from "@/lib/pull-request";
 import { pendingReview } from "@/lib/review";
 import {
   investigationStatusBadge,
@@ -40,6 +42,8 @@ export function InvestigationPanel({ incidentId }: { incidentId: string }) {
   const cancel = useCancelInvestigation(run?.id ?? "");
   const review =
     run?.status === "AWAITING_REVIEW" ? pendingReview(events) : null;
+  const prRequest =
+    run?.status === "AWAITING_PR_APPROVAL" ? pendingPrApproval(events) : null;
 
   return (
     <section className="flex flex-col gap-3">
@@ -154,13 +158,22 @@ export function InvestigationPanel({ incidentId }: { incidentId: string }) {
             events={events}
             state={state}
             gate={
-              review && (
+              review ? (
                 <ReviewGate
                   key={review.seq}
                   investigationId={run.id}
                   review={review}
                   canAnswer={canStart}
                 />
+              ) : (
+                prRequest && (
+                  <PrGate
+                    key={prRequest.seq}
+                    investigationId={run.id}
+                    request={prRequest}
+                    canAnswer={canStart}
+                  />
+                )
               )
             }
           />

@@ -1,10 +1,18 @@
 import { DiffViewer } from "@/components/investigations/diff-viewer";
 import { BulletBlock } from "@/components/investigations/bullet-block";
 import { SectionLabel } from "@/components/ui/section-label";
+import { PullRequestCard } from "@/components/investigations/pull-request-card";
+import type { PullRequestProgress } from "@/lib/pull-request";
 import type { Investigation } from "@/types/investigation";
 
 /** What to do about it: the recommendation, its checklist, and the diff when one passed validation. */
-export function FixPanel({ run }: { run: Investigation }) {
+export function FixPanel({
+  run,
+  pullRequest,
+}: {
+  run: Investigation;
+  pullRequest?: PullRequestProgress | null;
+}) {
   const rec = run.recommendation;
   if (!rec && !run.diff) {
     return (
@@ -15,6 +23,7 @@ export function FixPanel({ run }: { run: Investigation }) {
   }
   return (
     <>
+      {pullRequest && <PullRequestCard progress={pullRequest} />}
       {rec && (
         <div className="flex flex-col gap-1">
           <p className="text-sm font-medium">{rec.summary}</p>

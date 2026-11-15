@@ -4,6 +4,8 @@ export type InvestigationStatus =
   | "QUEUED"
   | "RUNNING"
   | "AWAITING_REVIEW"
+  | "AWAITING_PR_APPROVAL"
+  | "PUBLISHING"
   | "COMPLETED"
   | "FAILED"
   | "CANCELLED";
@@ -13,6 +15,8 @@ export const ACTIVE_STATUSES: readonly InvestigationStatus[] = [
   "QUEUED",
   "RUNNING",
   "AWAITING_REVIEW",
+  "AWAITING_PR_APPROVAL",
+  "PUBLISHING",
 ];
 
 export interface InvestigationScope {
@@ -98,6 +102,11 @@ export interface CreateInvestigationResponse {
   investigationId: string;
   status: InvestigationStatus;
 }
+
+export type PrAction = "approve" | "decline";
+
+/** What the repository's own CI said about the commit log0 made. */
+export type CiOutcome = "passed" | "failed" | "none" | "timeout";
 
 export type ReviewAction = "approve" | "refine" | "stop";
 
@@ -185,6 +194,23 @@ export interface EventPayloads {
       deletions: number;
     }[];
   };
+  "pr.approval_requested": {
+    repository: string;
+    branch: string;
+    defaultBranch: string;
+    baseSha: string;
+    files: { path: string; operation: ChangeOperation; additions: number; deletions: number }[];
+    rootCause: string;
+    confidenceBand: ConfidenceBand | null;
+  };
+  "pr.decided": { action: PrAction; decidedBy: string };
+  "branch.created": { name: string; baseSha: string };
+  "commit.created": { sha: string };
+  "tests.completed": {
+    outcome: CiOutcome;
+    checks: { name: string; conclusion: string }[];
+  };
+  "pr.opened": { number: number; url: string; branch: string; draft: boolean };
   "investigation.completed": Record<string, never>;
   "investigation.failed": { error: string };
   "investigation.cancelled": Record<string, never>;
@@ -223,5 +249,6 @@ export interface LatestInvestigation {
   status: InvestigationStatus;
   confidenceBand: ConfidenceBand | null;
   hasDiff: boolean;
+  hasPullRequest: boolean;
   createdAt: string;
 }

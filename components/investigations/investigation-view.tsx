@@ -15,6 +15,7 @@ import { Verdict } from "@/components/investigations/verdict";
 import { SectionLabel } from "@/components/ui/section-label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ConnectionState } from "@/lib/event-stream";
+import { pullRequestProgress } from "@/lib/pull-request";
 import { deriveStages } from "@/lib/stages";
 import {
   deriveEvidence,
@@ -50,6 +51,7 @@ export function InvestigationView({
   const hypotheses = useMemo(() => deriveHypotheses(events), [events]);
   const gaps = useMemo(() => deriveGaps(events), [events]);
   const redaction = useMemo(() => deriveRedaction(events), [events]);
+  const pullRequest = useMemo(() => pullRequestProgress(events), [events]);
   const { rootCause } = run;
   const done = run.status === "COMPLETED" && !!rootCause;
 
@@ -91,9 +93,9 @@ export function InvestigationView({
             </TabsTrigger>
             <TabsTrigger value="fix">
               Fix
-              {run.diff && (
+              {(run.diff || pullRequest?.pr) && (
                 <span
-                  aria-label="has a diff"
+                  aria-label={pullRequest?.pr ? "has a pull request" : "has a diff"}
                   className="size-1.5 rounded-full bg-primary"
                 />
               )}
@@ -135,7 +137,7 @@ export function InvestigationView({
           </TabsContent>
 
           <TabsContent value="fix">
-            <FixPanel run={run} />
+            <FixPanel run={run} pullRequest={pullRequest} />
           </TabsContent>
 
           <TabsContent value="steps">{steps}</TabsContent>

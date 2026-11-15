@@ -95,12 +95,16 @@ function AiCell({ run }: { run: LatestInvestigation | undefined }) {
       <Badge variant="outline" className={investigationStatusBadge[run.status]}>
         {investigationStatusLabel[run.status]}
       </Badge>
-      {run.status === "COMPLETED" && run.hasDiff && (
+      {run.status === "COMPLETED" && (run.hasPullRequest || run.hasDiff) && (
         <span
           className="font-mono text-[11px] text-primary"
-          title="A validated fix is ready"
+          title={
+            run.hasPullRequest
+              ? "A draft pull request was opened"
+              : "A validated fix is ready"
+          }
         >
-          +fix
+          {run.hasPullRequest ? "+PR" : "+fix"}
         </span>
       )}
     </span>

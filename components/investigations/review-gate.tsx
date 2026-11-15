@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { GateCard } from "@/components/investigations/gate-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -47,21 +48,17 @@ export function ReviewGate({
   }
 
   return (
-    <div
-      className="flex flex-col gap-3 rounded-xl border border-severity-high/40 bg-severity-high/10 p-3.5"
-      role="group"
-      aria-label="Review the root cause"
-    >
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-medium text-severity-high">Your call</p>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+    <GateCard
+      label="Review the root cause"
+      aside={
+        <>
           <span>Round {review.round}</span>
           {review.confidenceBand && (
             <Badge variant="outline">{review.confidenceBand} confidence</Badge>
           )}
-        </div>
-      </div>
-
+        </>
+      }
+    >
       <p className="text-sm">{review.rootCause}</p>
       {review.recommendation && (
         <p className="text-sm text-muted-foreground">
@@ -138,6 +135,6 @@ export function ReviewGate({
           </Button>
         </div>
       )}
-    </div>
+    </GateCard>
   );
 }

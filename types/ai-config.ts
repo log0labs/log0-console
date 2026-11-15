@@ -47,6 +47,9 @@ export interface Repository {
   name: string;
   defaultBranch: string;
   createdAt: string;
+  /** log0 may open draft pull requests here (needs an installation of the GitHub App). */
+  prWritesEnabled: boolean;
+  installationId: number | null;
 }
 
 export interface ConnectRepositoryInput {
@@ -59,4 +62,24 @@ export interface ServiceRepository {
   serviceName: string;
   repositoryId: string;
   pathPrefix: string;
+}
+
+export interface GithubAppStatus {
+  configured: boolean;
+  /** The server-wide switch for writing to repositories. */
+  writesEnabled: boolean;
+  installUrl: string | null;
+}
+
+export interface GithubInstallation {
+  installationId: number;
+  accountLogin: string;
+  accountType: string;
+  suspended: boolean;
+  createdAt: string;
+}
+
+export interface LinkInstallationInput {
+  installationId: number;
+  state: string;
 }
