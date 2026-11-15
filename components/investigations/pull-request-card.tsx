@@ -79,6 +79,11 @@ export function PullRequestCard({
           >
             {OUTCOME[tests.outcome].label}
           </Badge>
+          {tests.source === "sandbox" && (
+            <p className="text-xs text-muted-foreground">
+              Run by log0 in an isolated sandbox, not in your CI.
+            </p>
+          )}
           {tests.checks.length > 0 && (
             <ul className="flex flex-col gap-0.5 text-xs text-muted-foreground">
               {tests.checks.map((check) => (

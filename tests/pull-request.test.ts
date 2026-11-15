@@ -56,6 +56,19 @@ describe("pendingPrApproval", () => {
   });
 });
 
+describe("files outside the root cause", () => {
+  it("are carried to the approval, and a file without the flag counts as part of the cause", () => {
+    const withFlags = ev("pr.approval_requested", {
+      files: [
+        { path: "src/db.js", operation: "modify", additions: 1, deletions: 2, inRootCause: true },
+        { path: "src/seed.js", operation: "modify", additions: 1, deletions: 0, inRootCause: false },
+        { path: "old.js", operation: "modify", additions: 1, deletions: 0 },
+      ],
+    });
+    expect(pendingPrApproval([withFlags])?.files.map((f) => f.inRootCause)).toEqual([true, false, true]);
+  });
+});
+
 describe("pullRequestProgress", () => {
   it("is null for a run that never reached the pull request step", () => {
     expect(pullRequestProgress([ev("diff.generated", { files: [] })])).toBeNull();
@@ -80,7 +93,11 @@ describe("pullRequestProgress", () => {
       phase: "opened",
       branch: "log0/fix-a-b",
       commit: "b7d2e9f",
-      tests: { outcome: "failed", checks: [{ name: "ci", conclusion: "failure" }] },
+      tests: {
+        outcome: "failed",
+        source: "repository",
+        checks: [{ name: "ci", conclusion: "failure" }],
+      },
       pr: { number: 7, url: "https://github.com/acme/shop/pull/7" },
     });
   });
@@ -175,6 +192,12 @@ describe("what a human did with the pull request", () => {
     expect(
       pullRequestProgress([...opened(), ev("pr.closed", { number: 7 }), ev("pr.open", { number: 7 })])?.outcome
     ).toBe("open");
+  });
+
+  it("describes a repair after failing checks", () => {
+    expect(buildTimeline([ev("repair.started", { attempt: 1, logLines: 12 })]).map((r) => r.title)).toEqual([
+      "The checks failed: trying one corrected change",
+    ]);
   });
 
   it("describes them in the timeline", () => {

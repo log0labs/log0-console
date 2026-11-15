@@ -355,6 +355,23 @@ function PrRulesCard() {
           )}
         </span>
       </label>
+      <label className="flex items-start gap-2 text-sm">
+        <input
+          type="checkbox"
+          className="mt-1"
+          checked={form.sandboxTests}
+          disabled={!policy.data.serverSandboxAvailable}
+          onChange={(e) => setDraft({ ...form, sandboxTests: e.target.checked })}
+        />
+        <span>
+          Run the tests in log0&apos;s sandbox when the repository has no checks
+          <span className="block text-xs text-muted-foreground">
+            {policy.data.serverSandboxAvailable
+              ? "Runs your repository's own tests in a locked-down container with no network. Off unless you turn it on."
+              : "Not available on this server."}
+          </span>
+        </span>
+      </label>
       <div className="grid gap-4 sm:grid-cols-2">
         {RULE_FIELDS.map(({ key, label }) => (
           <div key={key} className="flex flex-col gap-1.5">

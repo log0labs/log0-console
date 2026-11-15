@@ -86,6 +86,8 @@ export interface LinkInstallationInput {
 
 export interface PrPolicyInput {
   onlyOnGreen: boolean;
+  /** Run the repository's tests in log0's sandbox when it has no checks of its own. */
+  sandboxTests: boolean;
   maxFiles: number | null;
   maxChangedLines: number | null;
   maxPerRepositoryPerHour: number | null;
@@ -101,4 +103,6 @@ export interface PrPolicy extends PrPolicyInput {
     maxPerTenantPerHour: number;
   };
   serverOnlyOnGreen: boolean;
+  /** The server has a test sandbox a workspace can opt in to. */
+  serverSandboxAvailable: boolean;
 }

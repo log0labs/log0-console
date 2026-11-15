@@ -10,7 +10,14 @@ export interface PendingPr {
   repository: string;
   branch: string;
   defaultBranch: string;
-  files: { path: string; operation: string; additions: number; deletions: number }[];
+  files: {
+    path: string;
+    operation: string;
+    additions: number;
+    deletions: number;
+    /** False: the root cause does not name this file (an extra change to look at separately). */
+    inRootCause: boolean;
+  }[];
   rootCause: string;
   confidenceBand: ConfidenceBand | null;
   seq: number;
@@ -46,6 +53,7 @@ export function pendingPrApproval(events: StreamEvent[]): PendingPr | null {
             operation: str(file.operation),
             additions: num(file.additions),
             deletions: num(file.deletions),
+            inRootCause: file.inRootCause !== false,
           };
         })
       : [],
@@ -61,7 +69,11 @@ export interface PullRequestProgress {
   phase: "declined" | "publishing" | "opened";
   branch: string | null;
   commit: string | null;
-  tests: { outcome: CiOutcome; checks: { name: string; conclusion: string }[] } | null;
+  tests: {
+    outcome: CiOutcome;
+    checks: { name: string; conclusion: string }[];
+    source: "repository" | "sandbox";
+  } | null;
   pr: { number: number; url: string } | null;
   /** What happened to the pull request on GitHub after it was opened (a human merged or closed it). */
   outcome: "open" | "merged" | "closed";
@@ -106,6 +118,7 @@ export function pullRequestProgress(
         ) {
           progress.tests = {
             outcome,
+            source: p.source === "sandbox" ? "sandbox" : "repository",
             checks: Array.isArray(p.checks)
               ? p.checks.map((c) => ({
                   name: str((c as Loose)?.name),
