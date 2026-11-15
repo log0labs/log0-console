@@ -56,6 +56,19 @@ describe("pendingPrApproval", () => {
   });
 });
 
+describe("files outside the root cause", () => {
+  it("are carried to the approval, and a file without the flag counts as part of the cause", () => {
+    const withFlags = ev("pr.approval_requested", {
+      files: [
+        { path: "src/db.js", operation: "modify", additions: 1, deletions: 2, inRootCause: true },
+        { path: "src/seed.js", operation: "modify", additions: 1, deletions: 0, inRootCause: false },
+        { path: "old.js", operation: "modify", additions: 1, deletions: 0 },
+      ],
+    });
+    expect(pendingPrApproval([withFlags])?.files.map((f) => f.inRootCause)).toEqual([true, false, true]);
+  });
+});
+
 describe("pullRequestProgress", () => {
   it("is null for a run that never reached the pull request step", () => {
     expect(pullRequestProgress([ev("diff.generated", { files: [] })])).toBeNull();

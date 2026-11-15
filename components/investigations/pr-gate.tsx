@@ -51,7 +51,17 @@ export function PrGate({
       <ul className="flex flex-col gap-0.5 text-xs">
         {request.files.map((file) => (
           <li key={file.path} className="flex justify-between gap-2">
-            <span className="truncate font-mono">{file.path}</span>
+            <span className="flex min-w-0 items-center gap-1.5">
+              <span className="truncate font-mono">{file.path}</span>
+              {!file.inRootCause && (
+                <span
+                  title="The root cause does not name this file"
+                  className="shrink-0 rounded border border-severity-high/40 px-1 text-[10px] text-severity-high"
+                >
+                  extra
+                </span>
+              )}
+            </span>
             <span className="shrink-0 font-mono">
               <span className="text-status-resolved">+{file.additions}</span>{" "}
               <span className="text-destructive">-{file.deletions}</span>
@@ -59,6 +69,12 @@ export function PrGate({
           </li>
         ))}
       </ul>
+      {request.files.some((f) => !f.inRootCause) && (
+        <p className="text-xs text-severity-high">
+          Files marked extra are not named in the root cause. Look at them
+          separately before you approve.
+        </p>
+      )}
       <p className="text-xs text-muted-foreground">
         log0 never merges. It waits for the checks of the repository and tells
         you what they said.

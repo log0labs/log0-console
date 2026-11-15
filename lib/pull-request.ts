@@ -10,7 +10,14 @@ export interface PendingPr {
   repository: string;
   branch: string;
   defaultBranch: string;
-  files: { path: string; operation: string; additions: number; deletions: number }[];
+  files: {
+    path: string;
+    operation: string;
+    additions: number;
+    deletions: number;
+    /** False: the root cause does not name this file (an extra change to look at separately). */
+    inRootCause: boolean;
+  }[];
   rootCause: string;
   confidenceBand: ConfidenceBand | null;
   seq: number;
@@ -46,6 +53,7 @@ export function pendingPrApproval(events: StreamEvent[]): PendingPr | null {
             operation: str(file.operation),
             additions: num(file.additions),
             deletions: num(file.deletions),
+            inRootCause: file.inRootCause !== false,
           };
         })
       : [],

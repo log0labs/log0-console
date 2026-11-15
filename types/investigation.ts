@@ -199,7 +199,7 @@ export interface EventPayloads {
     branch: string;
     defaultBranch: string;
     baseSha: string;
-    files: { path: string; operation: ChangeOperation; additions: number; deletions: number }[];
+    files: { path: string; operation: ChangeOperation; additions: number; deletions: number; inRootCause?: boolean }[];
     rootCause: string;
     confidenceBand: ConfidenceBand | null;
   };
