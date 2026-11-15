@@ -181,6 +181,12 @@ describe("what a human did with the pull request", () => {
     ).toBe("open");
   });
 
+  it("describes a repair after failing checks", () => {
+    expect(buildTimeline([ev("repair.started", { attempt: 1, logLines: 12 })]).map((r) => r.title)).toEqual([
+      "The checks failed: trying one corrected change",
+    ]);
+  });
+
   it("describes them in the timeline", () => {
     const rows = buildTimeline([ev("pr.merged"), ev("pr.closed"), ev("pr.open")]);
     expect(rows.map((r) => r.title)).toEqual([

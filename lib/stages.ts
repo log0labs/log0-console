@@ -62,6 +62,7 @@ const STAGE_OF: Record<string, StageId> = {
   "branch.created": "pr",
   "commit.created": "pr",
   "tests.completed": "pr",
+  "repair.started": "pr",
   "pr.opened": "pr",
 };
 

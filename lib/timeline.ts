@@ -320,6 +320,9 @@ export function buildTimeline(events: StreamEvent[]): TimelineRow[] {
         );
         break;
       }
+      case "repair.started":
+        row(event, "warning", "The checks failed: trying one corrected change");
+        break;
       case "pr.merged":
         row(event, "success", "Pull request merged");
         break;
