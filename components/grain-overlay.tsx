@@ -2,7 +2,8 @@ import React from "react";
 
 const GrainBackgroundOverlay = () => {
   return (
-    <>
+    // dark theme only: in light mode the cream page background must show
+    <div className="hidden dark:block">
       {/* Base background */}
       <div className="fixed inset-0 -z-20 bg-[#020617]" />
 
@@ -44,7 +45,7 @@ const GrainBackgroundOverlay = () => {
         </defs>
         <rect width="100%" height="100%" filter="url(#noise-filter)" />
       </svg>
-    </>
+    </div>
   );
 };
 

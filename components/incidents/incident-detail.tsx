@@ -10,6 +10,8 @@ import { useIncidentLogs } from "@/hooks/use-incident-logs";
 import { useUsers } from "@/hooks/use-users";
 import { incidentsApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
+import { AiSummary } from "@/components/incidents/ai-summary";
+import { InvestigationPanel } from "@/components/investigations/investigation-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -21,21 +23,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { IncidentStatus } from "@/types/incident";
+import { SectionLabel } from "@/components/ui/section-label";
 import {
   severityBadge as SEVERITY_CLASS,
   statusBadge as STATUS_CLASS,
+  statusLabel,
   logLevelText,
 } from "@/lib/theme/tokens";
 
 // Badge styles come from lib/theme/tokens.ts (central, theme-driven).
-
-const STATUS_LABEL: Record<IncidentStatus, string> = {
-  NEW: "New",
-  ASSIGNED: "Assigned",
-  ACKNOWLEDGED: "Acknowledged",
-  RESOLVED: "Resolved",
-};
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -233,7 +229,7 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-6 p-4 sm:p-6">
       {/* Service + badges */}
       <div className="flex flex-col gap-2">
         <h2 className="text-lg leading-tight font-semibold">
@@ -250,7 +246,7 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
             {incident.severity}
           </Badge>
           <Badge variant="outline" className={STATUS_CLASS[incident.status]}>
-            {STATUS_LABEL[incident.status]}
+            {statusLabel[incident.status]}
           </Badge>
         </div>
       </div>
@@ -317,6 +313,10 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
         />
       )}
 
+      <AiSummary incident={incident} />
+
+      <InvestigationPanel incidentId={incidentId} />
+
       {/* Quick stats */}
       <div className="grid grid-cols-2 gap-x-6 gap-y-3 rounded-lg border bg-muted/30 p-4 text-sm">
         <div>
@@ -355,33 +355,10 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
         )}
       </div>
 
-      {/* AI Summary */}
-      <div className="flex flex-col gap-2">
-        <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
-          AI Summary
-        </p>
-        {incident.aiSummary == null ? (
-          <div className="flex flex-col gap-2 rounded-lg border bg-muted/20 p-4">
-            <Skeleton className="h-3.5 w-full" />
-            <Skeleton className="h-3.5 w-5/6" />
-            <Skeleton className="h-3.5 w-4/6" />
-            <p className="mt-1 text-xs text-muted-foreground">
-              Generating summary…
-            </p>
-          </div>
-        ) : (
-          <p className="rounded-lg border bg-muted/20 p-4 text-sm leading-relaxed">
-            {incident.aiSummary}
-          </p>
-        )}
-      </div>
-
       {/* Status history */}
       {incident.statusHistory && incident.statusHistory.length > 0 && (
         <div className="flex flex-col gap-2">
-          <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
-            Status History
-          </p>
+          <SectionLabel>Status History</SectionLabel>
           <div className="flex flex-col">
             {incident.statusHistory.map((entry, i) => (
               <div key={i} className="flex items-start gap-3 py-2">
@@ -396,7 +373,7 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
                     variant="outline"
                     className={STATUS_CLASS[entry.status]}
                   >
-                    {STATUS_LABEL[entry.status]}
+                    {statusLabel[entry.status]}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
                     {timeAgo(entry.changedAt)}
@@ -410,9 +387,7 @@ export function IncidentDetail({ incidentId }: { incidentId: string }) {
 
       {/* Log samples */}
       <div className="flex flex-col gap-2">
-        <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
-          Log Samples
-        </p>
+        <SectionLabel>Log Samples</SectionLabel>
         <div className="flex flex-col gap-1.5">
           {(logsPage?.content ?? []).length > 0
             ? logsPage!.content.map((log) => (

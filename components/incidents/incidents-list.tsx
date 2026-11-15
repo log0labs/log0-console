@@ -1,12 +1,23 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 
-import { useIncidents } from "@/hooks/use-incidents";
-import type { Incident, IncidentStatus, Severity } from "@/types/incident";
-import { severityBadge, statusBadge } from "@/lib/theme/tokens";
+import { useIncidentPage, useIncidentStats } from "@/hooks/use-incidents";
+import { useLatestInvestigations } from "@/hooks/use-investigations";
+import type { LatestInvestigation } from "@/types/investigation";
+import type {
+  IncidentFilters,
+  IncidentStatus,
+  Severity,
+} from "@/types/incident";
+import {
+  investigationStatusBadge,
+  investigationStatusLabel,
+  severityBadge,
+  statusBadge,
+} from "@/lib/theme/tokens";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,45 +85,67 @@ function timeAgo(iso: string) {
   return formatDistanceToNow(new Date(iso), { addSuffix: true });
 }
 
-const PAGE_SIZE = 20;
 const ALL = "ALL";
+
+/** What the AI did about an incident, in one badge: not investigated, running, needs you, done (with a fix), failed. */
+function AiCell({ run }: { run: LatestInvestigation | undefined }) {
+  if (!run) return <span className="text-xs text-muted-foreground">-</span>;
+  return (
+    <span className="flex items-center gap-1.5">
+      <Badge variant="outline" className={investigationStatusBadge[run.status]}>
+        {investigationStatusLabel[run.status]}
+      </Badge>
+      {run.status === "COMPLETED" && (run.hasPullRequest || run.hasDiff) && (
+        <span
+          className="font-mono text-[11px] text-primary"
+          title={
+            run.hasPullRequest
+              ? "A draft pull request was opened"
+              : "A validated fix is ready"
+          }
+        >
+          {run.hasPullRequest ? "+PR" : "+fix"}
+        </span>
+      )}
+    </span>
+  );
+}
 
 export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
   const router = useRouter();
-  const { data, isLoading, isError } = useIncidents();
-
   const [service, setService] = useState("");
   const [severity, setSeverity] = useState<Severity | typeof ALL>(ALL);
   const [status, setStatus] = useState<IncidentStatus | typeof ALL>(ALL);
   const [environment, setEnvironment] = useState<string | typeof ALL>(ALL);
   const [page, setPage] = useState(0);
 
-  const environments = useMemo(() => {
-    if (!data) return [];
-    return [...new Set(data.content.map((i) => i.environment))].sort();
-  }, [data]);
+  // the service box filters as you type, but asks the server only after a short pause
+  const [serviceName, setServiceName] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => setServiceName(service.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [service]);
 
-  const filtered = useMemo<Incident[]>(() => {
-    if (!data) return [];
-    return data.content.filter((i) => {
-      if (severity !== ALL && i.severity !== severity) return false;
-      if (status !== ALL && i.status !== status) return false;
-      if (environment !== ALL && i.environment !== environment) return false;
-      if (
-        service &&
-        !i.serviceName.toLowerCase().includes(service.toLowerCase())
-      )
-        return false;
-      return true;
-    });
-  }, [data, severity, status, environment, service]);
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages - 1);
-  const pageItems = filtered.slice(
-    safePage * PAGE_SIZE,
-    safePage * PAGE_SIZE + PAGE_SIZE
+  const filters = useMemo<IncidentFilters>(
+    () => ({
+      ...(severity !== ALL && { severity }),
+      ...(status !== ALL && { status }),
+      ...(environment !== ALL && { environment }),
+      ...(serviceName && { serviceName }),
+    }),
+    [severity, status, environment, serviceName]
   );
+  const { data, isLoading, isError } = useIncidentPage(filters, page);
+  const { data: stats } = useIncidentStats();
+  const { data: latest } = useLatestInvestigations(
+    (data?.content ?? []).map((i) => i.incidentId)
+  );
+
+  const environments = stats?.environments ?? [];
+  const pageItems = data?.content ?? [];
+  const totalPages = Math.max(1, data?.totalPages ?? 1);
+  const safePage = Math.min(page, totalPages - 1);
+  const filtering = Object.keys(filters).length > 0;
 
   function resetPage() {
     setPage(0);
@@ -128,17 +161,15 @@ export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-4 p-4 md:gap-6 md:p-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold">Incidents</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {isLoading
             ? "Loading…"
-            : `${filtered.length} incident${filtered.length !== 1 ? "s" : ""}${
-                filtered.length !== data?.content.length
-                  ? ` (filtered from ${data?.content.length})`
-                  : ""
+            : `${data?.totalElements ?? 0} incident${data?.totalElements === 1 ? "" : "s"}${
+                filtering && stats ? ` (of ${stats.total})` : ""
               }`}
         </p>
       </div>
@@ -242,10 +273,13 @@ export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
               <TableHead className="w-28">Severity</TableHead>
               <TableHead className="w-36">Status</TableHead>
               <TableHead>Service</TableHead>
-              <TableHead>Environment</TableHead>
-              <TableHead className="w-28 text-right">Occurrences</TableHead>
-              <TableHead className="w-36">Last seen</TableHead>
-              <TableHead className="w-36">First seen</TableHead>
+              <TableHead className="max-md:hidden">Environment</TableHead>
+              <TableHead className="w-28 text-right max-md:hidden">
+                Occurrences
+              </TableHead>
+              <TableHead className="w-36 max-sm:hidden">Last seen</TableHead>
+              <TableHead className="w-36 max-lg:hidden">First seen</TableHead>
+              <TableHead className="w-32">AI</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -253,8 +287,19 @@ export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
             {isLoading ? (
               Array.from({ length: 8 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 7 }).map((_, j) => (
-                    <TableCell key={j}>
+                  {Array.from({ length: 8 }).map((_, j) => (
+                    <TableCell
+                      key={j}
+                      className={
+                        j === 3 || j === 4
+                          ? "max-md:hidden"
+                          : j === 5
+                            ? "max-sm:hidden"
+                            : j === 6
+                              ? "max-lg:hidden"
+                              : undefined
+                      }
+                    >
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
                   ))}
@@ -263,7 +308,7 @@ export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
             ) : isError ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={8}
                   className="py-12 text-center text-muted-foreground"
                 >
                   Failed to load incidents. Please try again.
@@ -272,7 +317,7 @@ export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
             ) : pageItems.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={8}
                   className="py-12 text-center text-muted-foreground"
                 >
                   No incidents found.
@@ -296,17 +341,20 @@ export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
                   <TableCell className="font-medium">
                     {incident.serviceName}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-muted-foreground max-md:hidden">
                     {incident.environment}
                   </TableCell>
-                  <TableCell className="text-right font-mono text-sm">
+                  <TableCell className="text-right font-mono text-sm max-md:hidden">
                     {incident.occurrenceCount.toLocaleString()}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="text-sm text-muted-foreground max-sm:hidden">
                     {timeAgo(incident.lastSeenAt)}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="text-sm text-muted-foreground max-lg:hidden">
                     {timeAgo(incident.firstSeenAt)}
+                  </TableCell>
+                  <TableCell>
+                    <AiCell run={latest?.[incident.incidentId]} />
                   </TableCell>
                 </TableRow>
               ))

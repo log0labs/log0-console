@@ -9,6 +9,7 @@ import { useApiKeys } from "@/hooks/use-api-keys";
 import { authApi } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CopyButton } from "@/components/ui/copy-button";
 import {
   Card,
   CardContent,
@@ -37,14 +38,6 @@ function RevealedKey({
   rawKey: string;
   onDismiss: () => void;
 }) {
-  const [copied, setCopied] = useState(false);
-
-  function copy() {
-    navigator.clipboard.writeText(rawKey);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
   return (
     <div className="rounded-lg border border-primary/40 bg-primary/10 p-4">
       <div className="mb-2 flex items-center justify-between">
@@ -60,14 +53,7 @@ function RevealedKey({
       </div>
       <div className="flex items-center gap-2 rounded-md border bg-background px-3 py-2">
         <code className="flex-1 truncate font-mono text-sm">{rawKey}</code>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-7 shrink-0 px-2 text-xs"
-          onClick={copy}
-        >
-          {copied ? "Copied!" : "Copy"}
-        </Button>
+        <CopyButton text={rawKey} what="Key copied" label="Copy key" />
       </div>
     </div>
   );

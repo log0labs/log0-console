@@ -15,6 +15,7 @@ import {
 } from "@hugeicons/core-free-icons";
 
 import { useAuthStore } from "@/store/auth";
+import { signOut } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -85,15 +86,8 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(true);
   const pathname = usePathname();
   const role = useAuthStore((s) => s.role);
-  const clearAuth = useAuthStore((s) => s.clearAuth);
 
   const isSettingsActive = pathname.startsWith("/settings");
-
-  async function handleLogout() {
-    clearAuth();
-    await fetch("/api/auth/cookie", { method: "DELETE" });
-    window.location.href = "/login";
-  }
 
   return (
     <aside
@@ -161,7 +155,7 @@ export function Sidebar() {
 
         <CollapsedTip show={collapsed} label="Log out">
           <button
-            onClick={handleLogout}
+            onClick={() => void signOut()}
             className={cn(
               "flex w-full items-center gap-3 rounded-md px-2 py-2 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent/60",
               collapsed && "justify-center"

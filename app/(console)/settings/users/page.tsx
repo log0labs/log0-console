@@ -8,7 +8,16 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
-import { useUsers } from "@/hooks/use-users";
+import {
+  useDeleteUser,
+  useUpdateRole,
+  useUsers,
+  type Role,
+  type User,
+} from "@/hooks/use-users";
+import { apiErrorMessage } from "@/lib/ai-config";
+import { useAuthStore } from "@/store/auth";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 import { authApi } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -171,11 +180,94 @@ function AddMemberForm({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
+const ROLES: Role[] = ["ADMIN", "ENGINEER", "VIEWER"];
+
+function MemberRow({ user, isSelf }: { user: User; isSelf: boolean }) {
+  const updateRole = useUpdateRole();
+  const remove = useDeleteUser();
+
+  return (
+    <TableRow>
+      <TableCell className="pl-6 font-medium">
+        {user.email}
+        {isSelf && (
+          <span className="ml-2 text-xs font-normal text-muted-foreground">
+            you
+          </span>
+        )}
+      </TableCell>
+      <TableCell>
+        {isSelf ? (
+          <Badge
+            variant="outline"
+            className={`text-xs ${ROLE_CLASS[user.role] ?? ""}`}
+          >
+            {user.role}
+          </Badge>
+        ) : (
+          <Select
+            value={user.role}
+            disabled={updateRole.isPending}
+            onValueChange={(role) =>
+              updateRole.mutate(
+                { userId: user.userId, role: role as Role },
+                {
+                  onSuccess: () => toast.success("Role updated"),
+                  onError: (e) =>
+                    toast.error(
+                      apiErrorMessage(e, "Could not change the role")
+                    ),
+                }
+              )
+            }
+          >
+            <SelectTrigger
+              className="h-8 w-32 text-xs"
+              aria-label={`Role of ${user.email}`}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ROLES.map((r) => (
+                <SelectItem key={r} value={r} className="text-xs">
+                  {r.charAt(0) + r.slice(1).toLowerCase()}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      </TableCell>
+      <TableCell className="text-right text-sm text-muted-foreground max-sm:hidden">
+        {format(new Date(user.createdAt), "MMM d, yyyy")}
+      </TableCell>
+      <TableCell className="w-24 pr-4 text-right">
+        {!isSelf && (
+          <ConfirmButton
+            label={`Remove ${user.email}`}
+            confirmLabel="Remove"
+            pending={remove.isPending}
+            onConfirm={() =>
+              remove.mutate(user.userId, {
+                onSuccess: () => toast.success("Member removed"),
+                onError: (e) =>
+                  toast.error(
+                    apiErrorMessage(e, "Could not remove the member")
+                  ),
+              })
+            }
+          />
+        )}
+      </TableCell>
+    </TableRow>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function MembersPage() {
   const [showForm, setShowForm] = useState(false);
   const { data: users, isLoading } = useUsers();
+  const selfId = useAuthStore((s) => s.userId);
 
   return (
     <div className="flex flex-col gap-6">
@@ -228,17 +320,22 @@ export default function MembersPage() {
               <TableRow>
                 <TableHead className="pl-6">Email</TableHead>
                 <TableHead className="w-32">Role</TableHead>
-                <TableHead className="w-40 pr-6 text-right">Joined</TableHead>
+                <TableHead className="w-40 text-right max-sm:hidden">
+                  Joined
+                </TableHead>
+                <TableHead className="w-24 pr-4" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <TableRow key={i}>
-                    {[1, 2, 3].map((j) => (
+                    {[1, 2, 3, 4].map((j) => (
                       <TableCell
                         key={j}
-                        className={j === 1 ? "pl-6" : j === 3 ? "pr-6" : ""}
+                        className={
+                          j === 1 ? "pl-6" : j === 3 ? "max-sm:hidden" : ""
+                        }
                       >
                         <Skeleton className="h-4 w-full" />
                       </TableCell>
@@ -248,7 +345,7 @@ export default function MembersPage() {
               ) : !users?.length ? (
                 <TableRow>
                   <TableCell
-                    colSpan={3}
+                    colSpan={4}
                     className="py-8 text-center text-muted-foreground"
                   >
                     No members found.
@@ -256,22 +353,11 @@ export default function MembersPage() {
                 </TableRow>
               ) : (
                 users.map((user) => (
-                  <TableRow key={user.userId}>
-                    <TableCell className="pl-6 font-medium">
-                      {user.email}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={`text-xs ${ROLE_CLASS[user.role] ?? ""}`}
-                      >
-                        {user.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="pr-6 text-right text-sm text-muted-foreground">
-                      {format(new Date(user.createdAt), "MMM d, yyyy")}
-                    </TableCell>
-                  </TableRow>
+                  <MemberRow
+                    key={user.userId}
+                    user={user}
+                    isSelf={user.userId === selfId}
+                  />
                 ))
               )}
             </TableBody>

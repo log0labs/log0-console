@@ -15,7 +15,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { useIncidents } from "@/hooks/use-incidents";
+import { useIncidents, useIncidentStats } from "@/hooks/use-incidents";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -45,17 +45,11 @@ import {
   statusFill as STATUS_FILL,
   severityBadge as SEVERITY_CLASS,
   statusBadge as STATUS_CLASS,
+  statusLabel,
   chartAccent,
 } from "@/lib/theme/tokens";
 
 // ── Colors come from lib/theme/tokens.ts (central, theme-driven) ───────────────
-
-const STATUS_LABEL: Record<IncidentStatus, string> = {
-  NEW: "New",
-  ASSIGNED: "Assigned",
-  ACKNOWLEDGED: "Acknowledged",
-  RESOLVED: "Resolved",
-};
 
 // ── Chart configs ─────────────────────────────────────────────────────────────
 
@@ -143,6 +137,8 @@ function StatCard({
 export default function DashboardPage() {
   const router = useRouter();
   const { data, isLoading } = useIncidents();
+  // exact counts from the database; the loaded incidents (up to 1,000) feed the trend and top services
+  const { data: exact } = useIncidentStats();
 
   // ── Derived stats ─────────────────────────────────────────────────────────
 
@@ -185,15 +181,16 @@ export default function DashboardPage() {
       )
       .slice(0, 8);
 
+    const exactStatus = exact?.byStatus ?? byStatus;
     return {
-      total: incidents.length,
-      open: byStatus.NEW + byStatus.ASSIGNED,
-      byStatus,
-      bySeverity,
+      total: exact?.total ?? incidents.length,
+      open: exactStatus.NEW + exactStatus.ASSIGNED,
+      byStatus: exactStatus,
+      bySeverity: exact?.bySeverity ?? bySeverity,
       topServices,
       recent,
     };
-  }, [data]);
+  }, [data, exact]);
 
   // ── Timeline: last 14 days, total incidents per day ───────────────────────
 
@@ -234,7 +231,7 @@ export default function DashboardPage() {
     if (!stats)
       return [{ name: "No data", value: 1, fill: "hsl(var(--muted))" }];
     const slices = (Object.keys(STATUS_FILL) as IncidentStatus[]).map((s) => ({
-      name: STATUS_LABEL[s],
+      name: statusLabel[s],
       value: stats.byStatus[s],
       fill: STATUS_FILL[s],
     }));
@@ -420,7 +417,7 @@ export default function DashboardPage() {
                       style={{ background: STATUS_FILL[s] }}
                     />
                     <span>
-                      {STATUS_LABEL[s]}:{" "}
+                      {statusLabel[s]}:{" "}
                       <span className="font-medium text-foreground">
                         {stats?.byStatus[s] ?? 0}
                       </span>
@@ -591,7 +588,7 @@ export default function DashboardPage() {
                         variant="outline"
                         className={`text-xs ${STATUS_CLASS[inc.status]}`}
                       >
-                        {STATUS_LABEL[inc.status]}
+                        {statusLabel[inc.status]}
                       </Badge>
                     </TableCell>
                     <TableCell className="font-medium">

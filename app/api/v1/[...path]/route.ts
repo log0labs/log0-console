@@ -6,40 +6,64 @@
 // so the browser still only ever talks to the console origin (no CORS, cookies
 // stay first-party).
 //
-// Routing: /api/v1/incidents/* and /api/v1/logs -> INCIDENTS_API_URL,
-// everything else (auth, tenants, users, api-keys) -> AUTH_API_URL.
+// Routing (lib/proxy-routing.ts):
+//   /api/v1/incidents/* and /api/v1/logs                    -> INCIDENTS_API_URL
+//   /api/v1/investigations, repositories, service-repositories, ai-settings -> AI_API_URL
+//   everything else (auth, tenants, users, api-keys)        -> AUTH_API_URL
+//
+// Streaming: an investigation's progress arrives as Server-Sent Events. When the upstream
+// answers `text/event-stream` the body is passed through as it arrives, unbuffered, and the
+// upstream request is aborted as soon as the browser disconnects.
 
 import type { NextRequest } from "next/server";
+import {
+  STRIP_REQUEST,
+  STRIP_RESPONSE,
+  buildTarget,
+  isEventStream,
+  isSafeSegments,
+  streamHeaders,
+  targetBase,
+} from "@/lib/proxy-routing";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// A stream stays open while an investigation runs (up to its 5 minute budget).
+export const maxDuration = 300;
 
-const AUTH_API_URL = process.env.AUTH_API_URL ?? "";
-const INCIDENTS_API_URL = process.env.INCIDENTS_API_URL ?? "";
-
-// Hop-by-hop / encoding headers that must not be forwarded verbatim.
-const STRIP_REQUEST = ["host", "connection", "content-length"];
-const STRIP_RESPONSE = ["transfer-encoding", "content-encoding", "content-length", "connection"];
-
-function targetBase(segments: string[]): string {
-  const first = segments[0];
-  if (first === "incidents" || first === "logs") return INCIDENTS_API_URL;
-  return AUTH_API_URL;
+function backends() {
+  return {
+    auth: process.env.AUTH_API_URL ?? "",
+    incidents: process.env.INCIDENTS_API_URL ?? "",
+    ai: process.env.AI_API_URL ?? "",
+  };
 }
 
 async function proxy(req: NextRequest, segments: string[]): Promise<Response> {
-  const base = targetBase(segments);
+  if (!isSafeSegments(segments)) {
+    return Response.json({ error: "Bad request path" }, { status: 400 });
+  }
+  const base = targetBase(segments, backends());
   if (!base) {
-    return Response.json({ error: "Backend URL not configured" }, { status: 500 });
+    return Response.json(
+      { error: "Backend URL not configured" },
+      { status: 500 }
+    );
   }
 
-  const search = new URL(req.url).search;
-  const target = `${base}/api/v1/${segments.join("/")}${search}`;
+  const target = buildTarget(base, segments, new URL(req.url).search);
 
   const headers = new Headers(req.headers);
   STRIP_REQUEST.forEach((h) => headers.delete(h));
 
-  const init: RequestInit = { method: req.method, headers, redirect: "manual" };
+  // `signal`: when the browser goes away (closes the tab, navigates), the upstream
+  // request, and with it a long-lived stream, is cancelled instead of leaking.
+  const init: RequestInit = {
+    method: req.method,
+    headers,
+    redirect: "manual",
+    signal: req.signal,
+  };
   if (req.method !== "GET" && req.method !== "HEAD") {
     init.body = await req.arrayBuffer();
   }
@@ -50,8 +74,15 @@ async function proxy(req: NextRequest, segments: string[]): Promise<Response> {
   } catch (err) {
     return Response.json(
       { error: "Upstream request failed", detail: String(err) },
-      { status: 502 },
+      { status: 502 }
     );
+  }
+
+  if (isEventStream(upstream.headers.get("content-type")) && upstream.body) {
+    return new Response(upstream.body, {
+      status: upstream.status,
+      headers: streamHeaders(upstream.headers),
+    });
   }
 
   const respHeaders = new Headers(upstream.headers);
