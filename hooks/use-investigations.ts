@@ -6,6 +6,7 @@ import type {
   CreateInvestigationRequest,
   CreateInvestigationResponse,
   Investigation,
+  LatestInvestigation,
   ResumeInvestigationRequest,
 } from "@/types/investigation";
 
@@ -84,7 +85,31 @@ export function useResumeInvestigation(investigationId: string) {
 export function useSendFeedback(investigationId: string) {
   return useMutation({
     mutationFn: async (body: FeedbackRequest) => {
-      await aiApi.post(`/api/v1/investigations/${investigationId}/feedback`, body);
+      await aiApi.post(
+        `/api/v1/investigations/${investigationId}/feedback`,
+        body
+      );
     },
+  });
+}
+
+/** The newest investigation of each listed incident (those that have one), keyed by incident id. */
+export function useLatestInvestigations(incidentIds: string[]) {
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const ids = incidentIds.slice(0, 100);
+
+  return useQuery<Record<string, LatestInvestigation>>({
+    queryKey: ["investigations", "latest", ids],
+    queryFn: async () => {
+      const { data } = await aiApi.get<LatestInvestigation[]>(
+        "/api/v1/investigations/latest",
+        { params: { incidentIds: ids.join(",") } }
+      );
+      return Object.fromEntries(data.map((row) => [row.incidentId, row]));
+    },
+    enabled: !!accessToken && ids.length > 0,
+    // an investigation that is running changes state: look again
+    refetchInterval: 15_000,
+    placeholderData: (previous) => previous,
   });
 }

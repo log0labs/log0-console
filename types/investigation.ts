@@ -215,3 +215,13 @@ export const TERMINAL_EVENT_TYPES: readonly string[] = [
   "investigation.failed",
   "investigation.cancelled",
 ];
+
+/** The newest investigation of one incident, as `GET /investigations/latest` returns it (for list views). */
+export interface LatestInvestigation {
+  incidentId: string;
+  investigationId: string;
+  status: InvestigationStatus;
+  confidenceBand: ConfidenceBand | null;
+  hasDiff: boolean;
+  createdAt: string;
+}

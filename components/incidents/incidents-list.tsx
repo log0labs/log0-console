@@ -5,12 +5,19 @@ import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 
 import { useIncidentPage, useIncidentStats } from "@/hooks/use-incidents";
+import { useLatestInvestigations } from "@/hooks/use-investigations";
+import type { LatestInvestigation } from "@/types/investigation";
 import type {
   IncidentFilters,
   IncidentStatus,
   Severity,
 } from "@/types/incident";
-import { severityBadge, statusBadge } from "@/lib/theme/tokens";
+import {
+  investigationStatusBadge,
+  investigationStatusLabel,
+  severityBadge,
+  statusBadge,
+} from "@/lib/theme/tokens";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,6 +87,26 @@ function timeAgo(iso: string) {
 
 const ALL = "ALL";
 
+/** What the AI did about an incident, in one badge: not investigated, running, needs you, done (with a fix), failed. */
+function AiCell({ run }: { run: LatestInvestigation | undefined }) {
+  if (!run) return <span className="text-xs text-muted-foreground">-</span>;
+  return (
+    <span className="flex items-center gap-1.5">
+      <Badge variant="outline" className={investigationStatusBadge[run.status]}>
+        {investigationStatusLabel[run.status]}
+      </Badge>
+      {run.status === "COMPLETED" && run.hasDiff && (
+        <span
+          className="font-mono text-[11px] text-primary"
+          title="A validated fix is ready"
+        >
+          +fix
+        </span>
+      )}
+    </span>
+  );
+}
+
 export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
   const router = useRouter();
   const [service, setService] = useState("");
@@ -106,6 +133,9 @@ export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
   );
   const { data, isLoading, isError } = useIncidentPage(filters, page);
   const { data: stats } = useIncidentStats();
+  const { data: latest } = useLatestInvestigations(
+    (data?.content ?? []).map((i) => i.incidentId)
+  );
 
   const environments = stats?.environments ?? [];
   const pageItems = data?.content ?? [];
@@ -243,8 +273,9 @@ export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
               <TableHead className="w-28 text-right max-md:hidden">
                 Occurrences
               </TableHead>
-              <TableHead className="w-36">Last seen</TableHead>
+              <TableHead className="w-36 max-sm:hidden">Last seen</TableHead>
               <TableHead className="w-36 max-lg:hidden">First seen</TableHead>
+              <TableHead className="w-32">AI</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -252,15 +283,17 @@ export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
             {isLoading ? (
               Array.from({ length: 8 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 7 }).map((_, j) => (
+                  {Array.from({ length: 8 }).map((_, j) => (
                     <TableCell
                       key={j}
                       className={
                         j === 3 || j === 4
                           ? "max-md:hidden"
-                          : j === 6
-                            ? "max-lg:hidden"
-                            : undefined
+                          : j === 5
+                            ? "max-sm:hidden"
+                            : j === 6
+                              ? "max-lg:hidden"
+                              : undefined
                       }
                     >
                       <Skeleton className="h-4 w-full" />
@@ -271,7 +304,7 @@ export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
             ) : isError ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={8}
                   className="py-12 text-center text-muted-foreground"
                 >
                   Failed to load incidents. Please try again.
@@ -280,7 +313,7 @@ export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
             ) : pageItems.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={8}
                   className="py-12 text-center text-muted-foreground"
                 >
                   No incidents found.
@@ -310,11 +343,14 @@ export function IncidentsList({ selectedId }: { selectedId?: string | null }) {
                   <TableCell className="text-right font-mono text-sm max-md:hidden">
                     {incident.occurrenceCount.toLocaleString()}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="text-sm text-muted-foreground max-sm:hidden">
                     {timeAgo(incident.lastSeenAt)}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground max-lg:hidden">
                     {timeAgo(incident.firstSeenAt)}
+                  </TableCell>
+                  <TableCell>
+                    <AiCell run={latest?.[incident.incidentId]} />
                   </TableCell>
                 </TableRow>
               ))
