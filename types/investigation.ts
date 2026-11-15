@@ -209,6 +209,8 @@ export interface EventPayloads {
   "tests.completed": {
     outcome: CiOutcome;
     checks: { name: string; conclusion: string }[];
+    /** Whose tests: the repository's own CI, or log0's isolated sandbox. */
+    source?: "repository" | "sandbox";
   };
   "pr.opened": { number: number; url: string; branch: string; draft: boolean };
   "investigation.completed": Record<string, never>;

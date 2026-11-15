@@ -80,7 +80,11 @@ describe("pullRequestProgress", () => {
       phase: "opened",
       branch: "log0/fix-a-b",
       commit: "b7d2e9f",
-      tests: { outcome: "failed", checks: [{ name: "ci", conclusion: "failure" }] },
+      tests: {
+        outcome: "failed",
+        source: "repository",
+        checks: [{ name: "ci", conclusion: "failure" }],
+      },
       pr: { number: 7, url: "https://github.com/acme/shop/pull/7" },
     });
   });

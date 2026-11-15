@@ -19,6 +19,7 @@ export const RULE_FIELDS: { key: RuleField; label: string }[] = [
 /** What the form holds: text for each limit (empty means "the server's value") and the checkbox. */
 export interface RulesForm {
   onlyOnGreen: boolean;
+  sandboxTests: boolean;
   values: Record<RuleField, string>;
 }
 
@@ -26,6 +27,7 @@ export function formFromPolicy(policy: PrPolicy): RulesForm {
   const text = (n: number | null) => (n === null ? "" : String(n));
   return {
     onlyOnGreen: policy.onlyOnGreen || policy.serverOnlyOnGreen,
+    sandboxTests: policy.sandboxTests && policy.serverSandboxAvailable,
     values: {
       maxFiles: text(policy.maxFiles),
       maxChangedLines: text(policy.maxChangedLines),
@@ -52,6 +54,7 @@ export function buildRules(form: RulesForm): PrPolicyInput {
   const num = (raw: string) => (raw.trim() === "" ? null : Number(raw));
   return {
     onlyOnGreen: form.onlyOnGreen,
+    sandboxTests: form.sandboxTests,
     maxFiles: num(form.values.maxFiles),
     maxChangedLines: num(form.values.maxChangedLines),
     maxPerRepositoryPerHour: num(form.values.maxPerRepositoryPerHour),
@@ -62,6 +65,7 @@ export function buildRules(form: RulesForm): PrPolicyInput {
 export function sameRules(a: RulesForm, b: RulesForm): boolean {
   return (
     a.onlyOnGreen === b.onlyOnGreen &&
+    a.sandboxTests === b.sandboxTests &&
     RULE_FIELDS.every(({ key }) => a.values[key].trim() === b.values[key].trim())
   );
 }

@@ -10,6 +10,7 @@ import type { PrPolicy } from "@/types/ai-config";
 
 const policy = (over: Partial<PrPolicy> = {}): PrPolicy => ({
   onlyOnGreen: false,
+  sandboxTests: false,
   maxFiles: null,
   maxChangedLines: null,
   maxPerRepositoryPerHour: null,
@@ -21,6 +22,7 @@ const policy = (over: Partial<PrPolicy> = {}): PrPolicy => ({
     maxPerTenantPerHour: 10,
   },
   serverOnlyOnGreen: false,
+  serverSandboxAvailable: false,
   ...over,
 });
 
@@ -63,6 +65,7 @@ describe("buildRules and sameRules", () => {
     const form = { ...base, onlyOnGreen: true, values: { ...base.values, maxFiles: "4" } };
     expect(buildRules(form)).toEqual({
       onlyOnGreen: true,
+      sandboxTests: false,
       maxFiles: 4,
       maxChangedLines: null,
       maxPerRepositoryPerHour: null,
@@ -74,5 +77,17 @@ describe("buildRules and sameRules", () => {
     const base = formFromPolicy(policy({ maxFiles: 3 }));
     expect(sameRules(base, { ...base, values: { ...base.values, maxFiles: " 3 " } })).toBe(true);
     expect(sameRules(base, { ...base, onlyOnGreen: true })).toBe(false);
+  });
+});
+
+describe("the sandbox switch", () => {
+  it("is on only when the workspace chose it and the server has a sandbox", () => {
+    expect(formFromPolicy(policy({ sandboxTests: true, serverSandboxAvailable: true })).sandboxTests).toBe(true);
+    expect(formFromPolicy(policy({ sandboxTests: true, serverSandboxAvailable: false })).sandboxTests).toBe(false);
+  });
+
+  it("counts as a change", () => {
+    const base = formFromPolicy(policy());
+    expect(sameRules(base, { ...base, sandboxTests: true })).toBe(false);
   });
 });
