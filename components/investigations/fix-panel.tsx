@@ -2,6 +2,7 @@ import { DiffViewer } from "@/components/investigations/diff-viewer";
 import { BulletBlock } from "@/components/investigations/bullet-block";
 import { SectionLabel } from "@/components/ui/section-label";
 import { PullRequestCard } from "@/components/investigations/pull-request-card";
+import { RemediationPanel } from "@/components/investigations/remediation-panel";
 import type { PullRequestProgress } from "@/lib/pull-request";
 import type { Investigation } from "@/types/investigation";
 
@@ -24,6 +25,9 @@ export function FixPanel({
   return (
     <>
       {pullRequest && <PullRequestCard progress={pullRequest} />}
+      {pullRequest?.outcome === "merged" && (
+        <RemediationPanel investigationId={run.id} />
+      )}
       {rec && (
         <div className="flex flex-col gap-1">
           <p className="text-sm font-medium">{rec.summary}</p>
