@@ -183,3 +183,13 @@ describe("checkErrorMessage", () => {
     expect(checkErrorMessage(null)).toMatch(/failed/);
   });
 });
+
+describe("validateToken", () => {
+  it("wants a token of a plausible length", async () => {
+    const { validateToken } = await import("@/lib/ai-config");
+    expect(validateToken("")).not.toBeNull();
+    expect(validateToken("   ")).not.toBeNull();
+    expect(validateToken("short")).not.toBeNull();
+    expect(validateToken("github_pat_0123456789")).toBeNull();
+  });
+});

@@ -82,6 +82,11 @@ export function validateRepositoryForm(
   return null;
 }
 
+/** Why a replacement token cannot be sent, or null. */
+export function validateToken(token: string): string | null {
+  return token.trim().length < MIN_KEY ? "Enter the access token." : null;
+}
+
 /** The folder of a repository a service lives in: no edge slashes, never climbing out ("" = whole repository). */
 export function normalizePathPrefix(value: string): string | null {
   const prefix = value.trim().replace(/^\/+|\/+$/g, "");
