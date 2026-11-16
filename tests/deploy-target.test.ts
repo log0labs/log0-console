@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildConfig,
   DEFAULT_RULES,
+  describeMissing,
   emptyForm,
   formFromConfig,
   inBounds,
@@ -183,5 +184,18 @@ describe("the service's rules", () => {
     expect(inBounds(0, { gt: 0 })).toBe(false);
     expect(inBounds(1, { lt: 1 })).toBe(false);
     expect(inBounds(Number.NaN, { ge: 0 })).toBe(false);
+  });
+});
+
+describe("missing permissions", () => {
+  it("names each permission with the level it still has to accept", () => {
+    expect(describeMissing({ deployments: "write", actions: "write" })).toBe("actions (write), deployments (write)");
+  });
+
+  it("copes with nothing missing and with a value that is not a map", () => {
+    expect(describeMissing({})).toBe("");
+    expect(describeMissing(null)).toBe("");
+    expect(describeMissing(undefined)).toBe("");
+    expect(describeMissing(["actions"] as unknown as Record<string, string>)).toBe("0 (actions)");
   });
 });
