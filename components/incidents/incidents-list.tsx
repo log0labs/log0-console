@@ -18,6 +18,8 @@ import {
   severityBadge,
   statusBadge,
 } from "@/lib/theme/tokens";
+import { deployMark } from "@/lib/remediation";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,9 +89,18 @@ function timeAgo(iso: string) {
 
 const ALL = "ALL";
 
+const MARK_TONE = {
+  good: "text-status-resolved",
+  bad: "text-destructive",
+  working: "text-primary",
+  ask: "text-severity-high",
+  neutral: "text-muted-foreground",
+} as const;
+
 /** What the AI did about an incident, in one badge: not investigated, running, needs you, done (with a fix), failed. */
 function AiCell({ run }: { run: LatestInvestigation | undefined }) {
   if (!run) return <span className="text-xs text-muted-foreground">-</span>;
+  const mark = deployMark(run.deployStatus);
   return (
     <span className="flex items-center gap-1.5">
       <Badge variant="outline" className={investigationStatusBadge[run.status]}>
@@ -105,6 +116,11 @@ function AiCell({ run }: { run: LatestInvestigation | undefined }) {
           }
         >
           {run.hasPullRequest ? "+PR" : "+fix"}
+        </span>
+      )}
+      {mark && (
+        <span className={cn("font-mono text-[11px]", MARK_TONE[mark.tone])} title="The latest deploy of the fix">
+          {mark.label}
         </span>
       )}
     </span>

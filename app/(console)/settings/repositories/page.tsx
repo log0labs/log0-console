@@ -38,6 +38,7 @@ import {
   validateRules,
   type RulesForm,
 } from "@/lib/pr-rules";
+import { DeployTargetsCard } from "@/components/repositories/deploy-target-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmButton } from "@/components/ui/confirm-button";
@@ -600,6 +601,20 @@ export default function RepositoriesPage() {
         </CardHeader>
         <CardContent>
           <PrRulesCard />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Deploys</CardTitle>
+          <CardDescription>
+            After a pull request is merged, log0 can ask your own deploy
+            workflow to ship it, watch the logs, and offer a rollback. Nothing
+            deploys without an approval.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DeployTargetsCard />
         </CardContent>
       </Card>
 
