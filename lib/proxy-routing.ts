@@ -20,6 +20,8 @@ const AI_SEGMENTS = new Set([
   "ai-settings",
   "runbooks",
   "github",
+  "remediations",
+  "deploy-targets",
 ]);
 
 /** The backend a path belongs to, by its first segment. Auth is the default, as before. */
