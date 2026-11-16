@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { DeployTarget, DeployTargetConfig } from "@/lib/deploy-target";
+import { DEFAULT_RULES, type DeployTarget, type DeployTargetConfig, type Rules } from "@/lib/deploy-target";
 import { aiApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 
@@ -52,4 +52,16 @@ export function useDeployAccess(installationId: number | null) {
       (await aiApi.get(`/api/v1/github/installations/${installationId}/deploy-access`)).data,
     staleTime: 60_000,
   });
+}
+
+/** The limits the service enforces on a configuration. Until they are read (or if they cannot be), the built-in copy is used. */
+export function useDeployRules(): Rules {
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const { data } = useQuery<Rules>({
+    queryKey: ["deploy-rules"],
+    enabled: !!accessToken,
+    queryFn: async () => (await aiApi.get<Rules>("/api/v1/deploy-targets/rules")).data,
+    staleTime: 10 * 60_000,
+  });
+  return data ?? DEFAULT_RULES;
 }

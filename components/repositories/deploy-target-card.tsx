@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   useDeployAccess,
+  useDeployRules,
   useDeployTarget,
   useRemoveDeployTarget,
   useSaveDeployTarget,
@@ -18,15 +19,18 @@ import { useRepositories } from "@/hooks/use-ai-config";
 import { apiErrorMessage } from "@/lib/ai-config";
 import {
   buildConfig,
+  DAYS,
   emptyForm,
   formFromConfig,
-  MAX_ENVIRONMENTS,
+  MAX_FREEZE_WINDOWS,
   newEnvironment,
+  newFreezeWindow,
   sameForm,
   summary,
   validateTarget,
   type DeployTargetConfig,
   type EnvironmentForm,
+  type FreezeForm,
   type TargetForm,
 } from "@/lib/deploy-target";
 import { useAuthStore } from "@/store/auth";
@@ -101,7 +105,8 @@ function TargetEditor({
   const [form, setForm] = useState<TargetForm>(initial);
   const save = useSaveDeployTarget(repo.id);
   const remove = useRemoveDeployTarget(repo.id);
-  const problem = validateTarget(form, original);
+  const rules = useDeployRules();
+  const problem = validateTarget(form, original, rules);
   const changed = !sameForm(form, initial);
 
   const setEnv = (index: number, patch: Partial<EnvironmentForm>) =>
@@ -201,10 +206,14 @@ function TargetEditor({
               </Button>
             )}
           </div>
+          <FreezeWindows
+            windows={env.freezeWindows}
+            onChange={(freezeWindows) => setEnv(index, { freezeWindows })}
+          />
         </fieldset>
       ))}
 
-      {form.environments.length < MAX_ENVIRONMENTS && (
+      {form.environments.length < rules.maxEnvironments && (
         <Button type="button" variant="outline" size="sm" className="self-start" onClick={() => setForm((f) => ({ ...f, environments: [...f.environments, newEnvironment()] }))}>
           Add an environment
         </Button>
@@ -254,5 +263,44 @@ function NumberField({ label, value, onChange }: { label: string; value: string;
       {label}
       <Input inputMode="numeric" value={value} onChange={(e) => onChange(e.target.value)} className="h-8 text-foreground" />
     </label>
+  );
+}
+
+/** Hours (UTC) on some weekdays when log0 will not deploy here, for example Friday afternoons. */
+function FreezeWindows({ windows, onChange }: { windows: FreezeForm[]; onChange: (windows: FreezeForm[]) => void }) {
+  const set = (index: number, patch: Partial<FreezeForm>) => onChange(windows.map((w, i) => (i === index ? { ...w, ...patch } : w)));
+  return (
+    <div className="flex flex-col gap-1.5">
+      {windows.map((w, index) => (
+        <div key={index} className="flex flex-wrap items-center gap-1.5 text-xs">
+          <span className="text-muted-foreground">No deploys on</span>
+          {DAYS.map((day, d) => (
+            <Button
+              key={day}
+              type="button"
+              variant="chip"
+              size="xs"
+              aria-pressed={w.days.includes(d)}
+              onClick={() => set(index, { days: w.days.includes(d) ? w.days.filter((x) => x !== d) : [...w.days, d] })}
+            >
+              {day}
+            </Button>
+          ))}
+          <span className="text-muted-foreground">from</span>
+          <Input aria-label="Freeze starts (UTC hour)" inputMode="numeric" value={w.startHour} onChange={(e) => set(index, { startHour: e.target.value })} className="h-7 w-14" />
+          <span className="text-muted-foreground">to</span>
+          <Input aria-label="Freeze ends (UTC hour)" inputMode="numeric" value={w.endHour} onChange={(e) => set(index, { endHour: e.target.value })} className="h-7 w-14" />
+          <span className="text-muted-foreground">UTC</span>
+          <Button type="button" variant="ghost" size="xs" onClick={() => onChange(windows.filter((_, i) => i !== index))}>
+            Remove
+          </Button>
+        </div>
+      ))}
+      {windows.length < MAX_FREEZE_WINDOWS && (
+        <Button type="button" variant="ghost" size="xs" className="self-start" onClick={() => onChange([...windows, newFreezeWindow()])}>
+          Add a freeze window
+        </Button>
+      )}
+    </div>
   );
 }

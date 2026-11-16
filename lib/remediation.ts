@@ -150,3 +150,25 @@ export function failureReason(remediation: Remediation): string | null {
   if (Array.isArray(refused) && refused.length > 0) return refused.join("; ");
   return remediation.status === "FAILED" ? "The deploy did not complete." : null;
 }
+
+/** The one-word mark the incident list shows for the latest deploy of an incident's fix, or null when nothing was deployed. */
+export function deployMark(status: string | null | undefined): { label: string; tone: Tone } | null {
+  switch (status) {
+    case "VERIFIED":
+      return { label: "deployed", tone: "good" };
+    case "ROLLED_BACK":
+      return { label: "rolled back", tone: "neutral" };
+    case "FAILED":
+      return { label: "deploy failed", tone: "bad" };
+    case "PREFLIGHT":
+    case "AWAITING_DEPLOY_APPROVAL":
+    case "DEPLOYING":
+    case "VERIFYING":
+    case "AWAITING_DECISION":
+    case "AWAITING_ROLLBACK_APPROVAL":
+    case "ROLLING_BACK":
+      return { label: "deploying", tone: "working" };
+    default:
+      return null;
+  }
+}

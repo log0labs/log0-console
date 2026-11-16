@@ -6,6 +6,7 @@ import {
   canAnswer,
   compare,
   countdown,
+  deployMark,
   failureReason,
   isSafeRunUrl,
   remediationErrorMessage,
@@ -129,5 +130,19 @@ describe("messages", () => {
     expect(failureReason(remediation({ outcome: { refused: ["frozen", "no checks"] } }))).toBe("frozen; no checks");
     expect(failureReason(remediation({ status: "FAILED" }))).toBe("The deploy did not complete.");
     expect(failureReason(remediation({ status: "VERIFIED" }))).toBeNull();
+  });
+});
+
+describe("the mark in the incident list", () => {
+  it("says what happened to the latest deploy, or nothing", () => {
+    expect(deployMark("VERIFIED")).toEqual({ label: "deployed", tone: "good" });
+    expect(deployMark("ROLLED_BACK")?.label).toBe("rolled back");
+    expect(deployMark("FAILED")?.tone).toBe("bad");
+    for (const running of ["PREFLIGHT", "DEPLOYING", "VERIFYING", "AWAITING_DECISION", "ROLLING_BACK"]) {
+      expect(deployMark(running)?.label).toBe("deploying");
+    }
+    expect(deployMark(null)).toBeNull();
+    expect(deployMark(undefined)).toBeNull();
+    expect(deployMark("OFFERED")).toBeNull();
   });
 });
