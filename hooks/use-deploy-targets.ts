@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { DEFAULT_RULES, type DeployTarget, type DeployTargetConfig, type Rules } from "@/lib/deploy-target";
+import { DEFAULT_RULES, type DeployAccess, type DeployTarget, type DeployTargetConfig, type Rules } from "@/lib/deploy-target";
 import { aiApi } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 
@@ -45,7 +45,7 @@ export function useRemoveDeployTarget(repositoryId: string) {
 /** Has the GitHub App installation accepted the permissions deploying needs? `missing` names what the admin must approve in GitHub. */
 export function useDeployAccess(installationId: number | null) {
   const accessToken = useAuthStore((s) => s.accessToken);
-  return useQuery<{ canDeploy: boolean; missing: string[] }>({
+  return useQuery<DeployAccess>({
     queryKey: ["deploy-access", installationId],
     enabled: !!accessToken && installationId !== null,
     queryFn: async () =>

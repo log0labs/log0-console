@@ -20,6 +20,7 @@ import { apiErrorMessage } from "@/lib/ai-config";
 import {
   buildConfig,
   DAYS,
+  describeMissing,
   emptyForm,
   formFromConfig,
   MAX_FREEZE_WINDOWS,
@@ -81,7 +82,7 @@ function DeployTargetRow({ repo }: { repo: Repository }) {
       </div>
       {access.data && !access.data.canDeploy && (
         <p role="alert" className="text-xs text-severity-high">
-          The GitHub App has not been granted: {access.data.missing.join(", ")}. Approve the new permissions for this
+          The GitHub App has not been granted: {describeMissing(access.data.missing)}. Approve the new permissions for this
           installation in GitHub first.
         </p>
       )}

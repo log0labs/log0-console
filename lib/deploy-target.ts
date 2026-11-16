@@ -242,3 +242,18 @@ export function summary(config: DeployTargetConfig | null): string {
   const on = config.environments.filter((e) => e.enabled).map((e) => e.name);
   return on.length > 0 ? `Deploys on: ${on.join(", ")}` : "Set up, but every environment is switched off.";
 }
+
+/** What the installation can do: `missing` maps each permission it still has to accept to the level wanted (empty when it can deploy). */
+export interface DeployAccess {
+  canDeploy: boolean;
+  missing: Record<string, string>;
+}
+
+/** "actions (write), deployments (write)": the missing permissions as a sentence part. Tolerates a missing or odd value. */
+export function describeMissing(missing: DeployAccess["missing"] | null | undefined): string {
+  if (!missing || typeof missing !== "object") return "";
+  return Object.entries(missing)
+    .map(([name, level]) => `${name} (${level})`)
+    .sort()
+    .join(", ");
+}
