@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   useConnectRepository,
   useDisconnectRepository,
+  useReplaceRepositoryToken,
   useMapService,
   useRepositories,
   useServiceRepositories,
@@ -15,6 +16,7 @@ import {
   apiErrorMessage,
   normalizePathPrefix,
   validateRepositoryForm,
+  validateToken,
   validateServiceName,
 } from "@/lib/ai-config";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -147,9 +149,12 @@ function RepositoryRow({
   const [confirming, setConfirming] = useState(false);
   const disconnect = useDisconnectRepository();
   const writes = useSetRepositoryWrites();
+  const replace = useReplaceRepositoryToken();
+  const [replacing, setReplacing] = useState(false);
+  const [newToken, setNewToken] = useState("");
 
   return (
-    <li className="flex items-center justify-between gap-2 py-2 max-sm:flex-col max-sm:items-start">
+    <li className="flex flex-wrap items-center justify-between gap-2 py-2 max-sm:flex-col max-sm:items-start">
       <div className="min-w-0">
         <p className="truncate font-mono text-sm">
           {repo.owner}/{repo.name}
@@ -220,11 +225,57 @@ function RepositoryRow({
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setReplacing((v) => !v)}
+            aria-expanded={replacing}
+          >
+            New token
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setConfirming(true)}
           >
             Disconnect
           </Button>
         </div>
+      )}
+      {replacing && !confirming && (
+        <form
+          className="flex w-full items-center gap-2 max-sm:flex-col max-sm:items-stretch"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (validateToken(newToken) || replace.isPending) return;
+            replace.mutate(
+              { repositoryId: repo.id, token: newToken.trim() },
+              {
+                onSuccess: () => {
+                  toast.success("Token replaced");
+                  setNewToken(""); // dropped from the page as soon as it is sent
+                  setReplacing(false);
+                },
+                onError: (e) =>
+                  toast.error(apiErrorMessage(e, "Could not replace the token")),
+              }
+            );
+          }}
+        >
+          <Input
+            aria-label="New GitHub access token"
+            type="password"
+            autoComplete="off"
+            spellCheck={false}
+            value={newToken}
+            onChange={(e) => setNewToken(e.target.value)}
+            placeholder="New read-only token for this repository"
+          />
+          <Button
+            type="submit"
+            size="sm"
+            disabled={!!validateToken(newToken) || replace.isPending}
+          >
+            {replace.isPending ? "Checking with GitHub…" : "Replace"}
+          </Button>
+        </form>
       )}
     </li>
   );

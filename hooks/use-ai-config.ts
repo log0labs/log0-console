@@ -87,6 +87,22 @@ export function useConnectRepository() {
   });
 }
 
+/** Give a connected repository a new access token. Its deploy settings, service mappings and installation stay. */
+export function useReplaceRepositoryToken() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { repositoryId: string; token: string }) =>
+      (
+        await aiApi.put<Repository>(
+          `/api/v1/repositories/${v.repositoryId}/token`,
+          { token: v.token }
+        )
+      ).data,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: KEYS.repositories }),
+  });
+}
+
 export function useDisconnectRepository() {
   const queryClient = useQueryClient();
   return useMutation({
