@@ -252,5 +252,7 @@ export interface LatestInvestigation {
   confidenceBand: ConfidenceBand | null;
   hasDiff: boolean;
   hasPullRequest: boolean;
+  /** Status of the latest deploy that began (a merge only offers one), or null when nothing was deployed. */
+  deployStatus?: string | null;
   createdAt: string;
 }
