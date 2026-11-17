@@ -17,6 +17,7 @@ import { useInvestigationEvents } from "@/hooks/use-investigation-events";
 import {
   useCancelInvestigation,
   useInvestigations,
+  useRetryInvestigation,
 } from "@/hooks/use-investigations";
 import { pendingPrApproval } from "@/lib/pull-request";
 import { pendingReview } from "@/lib/review";
@@ -40,6 +41,11 @@ export function InvestigationPanel({ incidentId }: { incidentId: string }) {
   const active = !!latest && ACTIVE_STATUSES.includes(latest.status);
   const { events, state } = useInvestigationEvents(run?.id ?? null);
   const cancel = useCancelInvestigation(run?.id ?? "");
+  const retry = useRetryInvestigation(run?.id ?? "");
+  const canRetry =
+    canStart &&
+    run?.id === latest?.id &&
+    (run?.status === "COMPLETED" || run?.status === "FAILED");
   const review =
     run?.status === "AWAITING_REVIEW" ? pendingReview(events) : null;
   const prRequest =
@@ -121,6 +127,28 @@ export function InvestigationPanel({ incidentId }: { incidentId: string }) {
                 {run.question ?? "Find the root cause"}
               </span>
             </div>
+            {canRetry && (
+              <div className="flex shrink-0 gap-1">
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  disabled={retry.isPending}
+                  title="Keep the evidence and ask for the root cause again"
+                  onClick={() => retry.mutate("root_cause")}
+                >
+                  Redo root cause
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  disabled={retry.isPending}
+                  title="Keep the root cause and write the fix again"
+                  onClick={() => retry.mutate("propose_changes")}
+                >
+                  Redo fix
+                </Button>
+              </div>
+            )}
             {canStart && ACTIVE_STATUSES.includes(run.status) && (
               <Button
                 variant="ghost"
@@ -132,6 +160,13 @@ export function InvestigationPanel({ incidentId }: { incidentId: string }) {
               </Button>
             )}
           </div>
+
+          {retry.isError && (
+            <p className="-mt-2 text-xs text-destructive">
+              This run cannot be taken back: it may have opened a pull request,
+              or it never reached that step.
+            </p>
+          )}
 
           {data && data.length > 1 && (
             <div className="-mt-2 flex gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none]">
