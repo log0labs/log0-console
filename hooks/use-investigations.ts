@@ -82,6 +82,21 @@ export function useResumeInvestigation(investigationId: string) {
   });
 }
 
+/** Run a finished investigation again from one step, keeping what it already gathered. */
+export function useRetryInvestigation(investigationId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (from: "root_cause" | "propose_changes") => {
+      await aiApi.post(`/api/v1/investigations/${investigationId}/retry`, {
+        from,
+      });
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["investigations"] }),
+  });
+}
+
 /** Answer the draft pull request approval: open it, or not. */
 export function usePrDecision(investigationId: string) {
   const queryClient = useQueryClient();
