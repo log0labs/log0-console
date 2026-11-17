@@ -39,7 +39,11 @@ export function InvestigationPanel({ incidentId }: { incidentId: string }) {
   const run = data?.find((r) => r.id === pickedId) ?? data?.[0];
   const latest = data?.[0];
   const active = !!latest && ACTIVE_STATUSES.includes(latest.status);
-  const { events, state } = useInvestigationEvents(run?.id ?? null);
+  const { events, state } = useInvestigationEvents(
+    run?.id ?? null,
+    true,
+    run?.status
+  );
   const cancel = useCancelInvestigation(run?.id ?? "");
   const retry = useRetryInvestigation(run?.id ?? "");
   const canRetry =

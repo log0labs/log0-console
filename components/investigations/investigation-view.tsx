@@ -53,7 +53,8 @@ export function InvestigationView({
   const redaction = useMemo(() => deriveRedaction(events), [events]);
   const pullRequest = useMemo(() => pullRequestProgress(events), [events]);
   const { rootCause } = run;
-  const done = run.status === "COMPLETED" && !!rootCause;
+  const waitingForPr = run.status === "AWAITING_PR_APPROVAL";
+  const done = (run.status === "COMPLETED" || waitingForPr) && !!rootCause;
 
   const steps = <Timeline events={events} state={state} working={active} />;
 
@@ -82,7 +83,7 @@ export function InvestigationView({
       )}
 
       {done ? (
-        <Tabs defaultValue="cause">
+        <Tabs defaultValue={waitingForPr && run.diff ? "fix" : "cause"}>
           <TabsList>
             <TabsTrigger value="cause">Cause</TabsTrigger>
             <TabsTrigger value="evidence">

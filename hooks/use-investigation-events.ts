@@ -26,11 +26,13 @@ const EMPTY: StreamEvent[] = [];
 /**
  * The live events of one investigation, in order. Pass `null` to follow nothing.
  * Follows the stream while the component is mounted and `enabled` is true; the connection state says
- * whether the events are arriving live, by polling, or not at all.
+ * whether the events are arriving live, by polling, or not at all. A new `restartKey` (for example the run's status)
+ * reconnects: a run that was taken back to an earlier step is the same investigation with a stream that had ended.
  */
 export function useInvestigationEvents(
   investigationId: string | null,
-  enabled = true
+  enabled = true,
+  restartKey?: string
 ) {
   const queryClient = useQueryClient();
   // Events are stored with the id they belong to, so switching investigations never shows the old ones.
@@ -69,7 +71,7 @@ export function useInvestigationEvents(
     });
 
     return () => controller.abort();
-  }, [investigationId, enabled, queryClient]);
+  }, [investigationId, enabled, restartKey, queryClient]);
 
   const events = stored.id === investigationId ? stored.events : EMPTY;
   return { events, state };
